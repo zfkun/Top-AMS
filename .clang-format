@@ -1,0 +1,28 @@
+BasedOnStyle: LLVM  # 或 Google、Chromium 等
+
+BreakBeforeBraces: Custom  # 自定义大括号样式
+BraceWrapping:
+  AfterFunction: false      # 函数左大括号不换行
+  AfterClass: false         # 类左大括号不换行
+  AfterStruct: false # 结构体定义后面
+  AfterControlStatement: false  # if/for 等左大括号不换行
+  AfterNamespace: false # 命名空间定义后面
+  AfterEnum: false # 枚举定义后面
+
+  
+ColumnLimit: 0 # 每行字符的限制，0表示没有限制
+
+IndentWidth: 4 # 缩进宽度
+
+FixNamespaceComments: false # 固定命名空间注释
+NamespaceIndentation: All # 命名空间缩进
+
+MaxEmptyLinesToKeep: 5  # 连续空行的最大数量
+
+
+
+SpacesInLineBreaks: true    # 在换行运算符（如 <<, >>）前后加空格
+# SpacesInParentheses: false  # 括号内不加空格（保持紧凑）
+# SpacesInSquareBrackets: false  # 数组方括号内不加空格
+
+#https://zhuanlan.zhihu.com/p/356143396
