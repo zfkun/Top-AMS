@@ -161,9 +161,15 @@ void work(esp_mqtt_client_handle_t client) { // 需要更好名字
  * 似乎外挂托盘的数据也能通过mqtt改动
  */
 
+// 定义控件ID
+uint16_t textInputId;
+uint16_t displayLabelId;
 
-// #include <esp_mqtt.hpp>
 
+
+void testCallback(Control *sender, int type) {
+    fpr("testcallback");
+}
 
 extern "C" void app_main() {
     initArduino();
@@ -206,35 +212,13 @@ extern "C" void app_main() {
         fpr("IP Address: ", WiFi.localIP()[0], ".", WiFi.localIP()[1], ".", WiFi.localIP()[2], ".", WiFi.localIP()[3]);
     } // wifi连接部分
 
-    // using namespace config;
 
-    // nvs_flash_init();
-    //     // 配置 MQTT 客户端参数
-    //     esp_mqtt_client_config_t mqtt_cfg{};
-    // mqtt_cfg.broker.address.uri = mqtt_server.c_str();
-    // // mqtt_cfg.broker.verification.use_global_ca_store = false;
-    // mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
-    // mqtt_cfg.credentials.username = mqtt_username.c_str();
-    // mqtt_cfg.credentials.authentication.password = mqtt_pass.c_str();
+    auto text = ESPUI.text("Label", testCallback, ControlColor::Dark, "Initial value");
+    ESPUI.addControl(ControlType::Max, "", "32", ControlColor::None, text);
 
-    // 创建 MQTT 客户端对象
-    // auto mqtt_client = esp_mqtt::client::create(mqtt_cfg);
+    ESPUI.begin("web 标题");
 
-    // // 注册事件回调（C++11 lambda）
-    // mqtt_client->on_event([](esp_mqtt::event const &event) {
-    //     if (event.type() == esp_mqtt::event_type::CONNECTED) {
-    //         ESP_LOGI(TAG, "Connected to broker!");
-    //         event.client().subscribe("/topic/test", QoS::AT_LEAST_ONCE);
-    //     } else if (event.type() == esp_mqtt::event_type::DATA) {
-    //         ESP_LOGI(TAG, "Received: %.*s", event.data().size(), event.data().data());
-    //     }
-    // });
-
-    // // 启动 MQTT 客户端
-    // mqtt_client->start();
-
-
-    // return;
+    return ;
 
     fpr("开始MQTT");
     auto client = esp::mqtt_app_start<callback_fun>(config::mqtt_server, config::mqtt_username, config::mqtt_pass);
