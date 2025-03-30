@@ -1,5 +1,5 @@
 # AMS进退料模块说明
-[![AMS渲染图](Image\Documents.png)](Documents.png)
+[![AMS渲染图](./Image/Documents.png)](./Image/Documents.png)
 
 ## 需要购买硬件
 - 橡胶圈
