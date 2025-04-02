@@ -26,23 +26,6 @@ namespace config {
     //**********************用户配置区开始******************************
 
 
-#ifdef LOCAL_BAMBU_IP
-    inline const string ip = LOCAL_BAMBU_IP; // 打印机ip
-#else
-    inline const string ip = "192.168.1.1"; // 打印机ip
-#endif
-
-#ifdef LOCAL_MQTT_PASS
-    inline const string mqtt_pass = LOCAL_MQTT_PASS; // mqtt密码
-#else
-    inline const string mqtt_pass = "00000000"; // mqtt密码
-#endif
-
-#ifdef LOCAL_DEVICE_SERIAL
-    inline const string device_serial = LOCAL_DEVICE_SERIAL; // 设备序列号
-#else
-    inline const string device_serial = "XXXXXXXXXXXXXXX"; // 设备序列号
-#endif
 
     inline const auto uload_time = 5s; // 退料运转时间
     inline const auto load_time = 6s;  // 进料运转时间,时间要比退料久一些
@@ -67,15 +50,26 @@ namespace config {
     // GPIO_NUM_NC表示不使用
 
 
+    inline string bambu_ip;
+    inline string device_serial;
+    inline string Mqtt_pass;
+
     //**********************用户配置区结束******************************
     //**********************用户配置区结束******************************
     //**********************用户配置区结束******************************
 
 
+    inline string mqtt_server(const string &ip = bambu_ip) { return "mqtts://" + ip + ":8883"; }
+    inline string mqtt_username = "bblp";
+    inline string topic_subscribe(const string &_device_serial = device_serial) {
+        return "device/" + _device_serial + "/report";
+    }
+    inline string topic_publish(const string &_device_serial = device_serial) {
+        return "device/" + _device_serial + "/request";
+    }
 
-    inline const string mqtt_server = "mqtts://" + ip + ":8883";
-    inline const string mqtt_username = "bblp";
-    inline const string topic_subscribe = "device/" + device_serial + "/report";
-    inline const string topic_publish = "device/" + device_serial + "/request";
+
+
+
 
 } // config

@@ -15,6 +15,8 @@
 #include "espIO.hpp"
 #include "espMQTT.hpp"
 
+using std::string;
+
 
 int bed_target_temper_max = 0;
 std::atomic<int> extruder = 1; // 1-16,初始通道默认为1
@@ -22,6 +24,7 @@ int sequence_id = -1;
 // std::atomic<int> print_error = 0;
 std::atomic<int> ams_status = -1;
 std::atomic<bool> pause_lock{false}; // 暂停锁
+
 
 inline constexpr int 正常 = 0;
 inline constexpr int 退料完成需要退线 = 260;
@@ -35,7 +38,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string &msg) {
     esp::gpio_out(esp::LED_L, true);
     // mstd::delay(2s);
     fpr("发送消息:", msg);
-    int msg_id = esp_mqtt_client_publish(client, config::topic_publish.c_str(), msg.c_str(), msg.size(), 0, 0);
+    int msg_id = esp_mqtt_client_publish(client, config::topic_publish().c_str(), msg.c_str(), msg.size(), 0, 0);
     if (msg_id < 0)
         fpr("发送失败");
     else
@@ -174,15 +177,12 @@ void testCallback(Control *sender, int type) {
 extern "C" void app_main() {
     initArduino();
 
+
     { // wifi连接部分
         mesp::ConfigStore wificonfig("wificonfig");
 
-        std::string Wifi_ssid = wificonfig.get("Wifi_ssid", "");
-        std::string Wifi_pass = wificonfig.get("Wifi_pass", "");
-#ifdef LOCAL_WIFI_SSID
-        Wifi_ssid = LOCAL_WIFI_SSID;
-        Wifi_pass = LOCAL_WIFI_PASS;
-#endif
+        string Wifi_ssid = wificonfig.get("Wifi_ssid", "");
+        string Wifi_pass = wificonfig.get("Wifi_pass", "");
 
         if (Wifi_ssid == "") {
             WiFi.mode(WIFI_AP_STA);
@@ -218,16 +218,30 @@ extern "C" void app_main() {
 
     ESPUI.begin("web 标题");
 
-    return ;
+    { // Mqtt和打印机配置
+        mesp::ConfigStore Mqttconfig("Mqttconfig");
 
-    fpr("开始MQTT");
-    auto client = esp::mqtt_app_start<callback_fun>(config::mqtt_server, config::mqtt_username, config::mqtt_pass);
-    mstd::delay(10s);
+        config::bambu_ip = Mqttconfig.get("Mqtt_ip", "");
+        config::Mqtt_pass= Mqttconfig.get("Mqtt_pass", "");
+        config::device_serial = Mqttconfig.get("device_serial", "");
 
-    // publish(client,bambu::msg::runGcode("M190 S10"));
-    // publish(client,bambu::msg::led_on);
 
-    work(client);
+
+        return;
+
+        fpr("开始MQTT");
+        auto client = esp::mqtt_app_start<callback_fun>(
+            config::mqtt_server(config::bambu_ip),
+            config::mqtt_username,
+            config::Mqtt_pass);
+
+        mstd::delay(10s);
+
+        // publish(client,bambu::msg::runGcode("M190 S10"));
+        // publish(client,bambu::msg::led_on);
+
+        work(client);
+    } // Mqtt配置
 
     int cnt = 0;
     while (true) {

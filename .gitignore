@@ -4,3 +4,4 @@ sdkconfig.old
 managed_components/
 .vscode/
 localconfig.hpp
+temp/
