@@ -174,7 +174,9 @@ void testCallback(Control *sender, int type) {
     fpr("testcallback");
 }
 
-extern "C" void app_main() {
+// #include <WebSocketsServer.h>
+
+    extern "C" void app_main() {
     initArduino();
 
 

@@ -1,16 +1,16 @@
-;====TOP-AMS====A1mini====2025年1月18日14:42:50====start=====
+;====TOP-AMS====A1mini====2025年4月4日19:18:04====start=====
 
 {if toolchange_count > 1}
 G17
 G2 Z{max_layer_z + 0.4} I0.86 J0.86 P1 F10000 ;回抽抬升
-;endif;放在结尾,目前设定首次就不换色
+;endif;放在结尾,目前设定首次就不换色,如果想要首次换色,取消本行注释,且注释本文件最后一行的endif
 
 G1 Z{max_layer_z + 3.0}
 ;Z抬升
 
 
 {if long_retractions_when_cut[previous_extruder]}
-G1 E-{retraction_distances_when_cut[previous_extruder]} F1200;不太理解这个1200的取值
+G1 E-{retraction_distances_when_cut[previous_extruder]} F1200;加速度也会影响实际回抽量
 {endif}
 M400
 ;长回抽
