@@ -7,6 +7,14 @@
 
 
 namespace mesp {
+
+    struct init_t {
+        init_t() {
+            initArduino();
+        }
+    };
+    inline init_t __init;
+
     struct ConfigStore {
         Preferences prefs;
 
@@ -19,6 +27,9 @@ namespace mesp {
 
         void set(const std::string &key, const std::string &value) {
             prefs.putString(key.c_str(), value.c_str());
+        }
+        void set(const std::string &key, const char *value) {
+            prefs.putString(key.c_str(), value);
         }
         void set(const std::string &key, const int &value) {
             prefs.putInt(key.c_str(), value);

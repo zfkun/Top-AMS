@@ -19,4 +19,5 @@ struct initconfig_t {
         }
     }
 };
+// inline initconfig_t __initconfig;
 // 方便本地调试

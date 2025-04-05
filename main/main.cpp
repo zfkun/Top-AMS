@@ -19,18 +19,18 @@ using std::string;
 
 
 int bed_target_temper_max = 0;
-std::atomic<int> extruder = 1; // 1-16,初始通道默认为1
+std::atomic<int> extruder = 1;// 1-16,初始通道默认为1
 int sequence_id = -1;
 // std::atomic<int> print_error = 0;
 std::atomic<int> ams_status = -1;
-std::atomic<bool> pause_lock{false}; // 暂停锁
+std::atomic<bool> pause_lock{false};// 暂停锁
 
 
 inline constexpr int 正常 = 0;
 inline constexpr int 退料完成需要退线 = 260;
-inline constexpr int 退料完成 = 0; // 同正常
+inline constexpr int 退料完成 = 0;// 同正常
 inline constexpr int 进料检查 = 262;
-inline constexpr int 进料冲刷 = 263; // 推测
+inline constexpr int 进料冲刷 = 263;// 推测
 inline constexpr int 进料完成 = 768;
 
 
@@ -45,10 +45,10 @@ void publish(esp_mqtt_client_handle_t client, const std::string &msg) {
         fpr("发送成功,消息id=", msg_id);
     // fpr(TAG, "binary sent with msg_id=%d", msg_id);
     esp::gpio_out(esp::LED_L, false);
-    mstd::delay(2s); //@_@这些延时还可以调整看看
+    mstd::delay(2s);//@_@这些延时还可以调整看看
 }
 
-void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) { // 接受到信息的回调
+void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) {// 接受到信息的回调
     // fpr(json);
     using namespace ArduinoJson;
     JsonDocument doc;
@@ -64,13 +64,13 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) { //
     // fpr("nozzle_target_temper:",nozzle_target_temper);
 
     // return;
-    if (bed_target_temper > 0 && bed_target_temper < 17) { // 读到的温度是通道
+    if (bed_target_temper > 0 && bed_target_temper < 17) {// 读到的温度是通道
         if (gcode_state == "PAUSE") {
             // mstd::delay(4s);//确保暂停动作(3.5s)完成
-            mstd::delay(4500ms);             // 貌似4s还是有可能会哟ubug
-            if (bed_target_temper_max > 0) { // 似乎热床置零会导致热端固定到90
+            mstd::delay(4500ms);            // 貌似4s还是有可能会哟ubug
+            if (bed_target_temper_max > 0) {// 似乎热床置零会导致热端固定到90
                 publish(client, bambu::msg::runGcode(
-                                    std::string("M190 S") + std::to_string(bed_target_temper_max) // 恢复原来的热床温度
+                                    std::string("M190 S") + std::to_string(bed_target_temper_max)// 恢复原来的热床温度
                                     // + std::string(R"(\nM109 S255)")//提前升温,9系命令自带阻塞,应该无法使两条一起生效
                                     ));
             }
@@ -78,22 +78,22 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) { //
             if (extruder.exchange(bed_target_temper) != bed_target_temper) {
                 fpr("唤醒换料程序");
                 pause_lock = true;
-                extruder.notify_one();       // 唤醒耗材切换
-            } else if (!pause_lock.load()) { // 可能会收到旧消息
+                extruder.notify_one();      // 唤醒耗材切换
+            } else if (!pause_lock.load()) {// 可能会收到旧消息
                 fpr("同一耗材,无需换料");
-                publish(client, bambu::msg::print_resume); // 无须换料
+                publish(client, bambu::msg::print_resume);// 无须换料
             }
             if (bed_target_temper_max > 0)
-                bed_target_temper = bed_target_temper_max; // 必要,恢复温度后,MQTT的更新可能不及时
+                bed_target_temper = bed_target_temper_max;// 必要,恢复温度后,MQTT的更新可能不及时
 
         } else {
             // publish(client,bambu::msg::get_status);//从第二次暂停开始,PAUSE就不会出现在常态消息里,不知道怎么回事
             // 还是会的,只是不一定和温度改变在一条json里
         }
     } else if (bed_target_temper == 0)
-        bed_target_temper_max = 0; // 打印结束or冷打印版
+        bed_target_temper_max = 0;// 打印结束or冷打印版
     else
-        bed_target_temper_max = std::max(bed_target_temper, bed_target_temper_max); // 不同材料可能底板温度不一样,这里选择维持最高的
+        bed_target_temper_max = std::max(bed_target_temper, bed_target_temper_max);// 不同材料可能底板温度不一样,这里选择维持最高的
 
     // int print_error_now = doc["print"]["print_error"] | -1;
     // if (print_error_now != -1) {
@@ -109,10 +109,10 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) { //
             ams_status.notify_one();
     }
 
-} // callback
+}// callback
 
 
-void work(esp_mqtt_client_handle_t client) { // 需要更好名字
+void work(mesp::Mqttclient client) {// 需要更好名字
     int old_extruder = extruder;
     while (true) {
 
@@ -130,7 +130,7 @@ void work(esp_mqtt_client_handle_t client) { // 需要更好名字
         mstd::delay(config::uload_time);
         // 这里可以检查一下线确实退出来了
         esp::gpio_out(config::motors[old_extruder - 1].backward, false);
-        mstd::atomic_wait_un(ams_status, 退料完成); // 应该需要这个wait,打印机或者网络偶尔会卡
+        mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
 
         fpr("进线");
         old_extruder = extruder;
@@ -151,36 +151,31 @@ void work(esp_mqtt_client_handle_t client) { // 需要更好名字
         // 	mstd::delay(2s);
         // }
 
-        publish(client, bambu::msg::print_resume); // 暂停恢复
-        mstd::delay(4s);                           // 等待命令落实
+        publish(client, bambu::msg::print_resume);// 暂停恢复
+        mstd::delay(4s);                          // 等待命令落实
         esp::gpio_out(config::motors[old_extruder - 1].forward, true);
-        mstd::delay(7s); // 辅助进料时间,@_@也可以考虑放在config
+        mstd::delay(7s);// 辅助进料时间,@_@也可以考虑放在config
         esp::gpio_out(config::motors[old_extruder - 1].forward, false);
 
         pause_lock = false;
-    } // while
-} // work
+    }// while
+}// work
 /*
  * 似乎外挂托盘的数据也能通过mqtt改动
  */
 
-// 定义控件ID
-uint16_t textInputId;
-uint16_t displayLabelId;
+
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
+
+const std::string web = R"rawliteral(
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport"content="width=device-width, initial-scale=1.0"><title>ESP32 LED控制</title><style>body{font-family:Arial;text-align:center;margin-top:50px}button{padding:15px 30px;font-size:20px;margin:10px}#status{color:#666;margin-top:20px}</style></head><body><h1>ESP32 LED控制</h1><button onclick="sendCommand('on')">打开LED</button><button onclick="sendCommand('off')">关闭LED</button><div id="status">状态:等待连接...</div><script>const ws=new WebSocket('ws://'+window.location.hostname+'/ws');ws.onopen=function(){document.getElementById('status').innerHTML="状态: 已连接"};ws.onmessage=function(event){document.getElementById('status').innerHTML=event.data};function sendCommand(cmd){ws.send(cmd)}</script></body></html><!DOCTYPE html>
+)rawliteral";
+
+extern "C" void app_main() {
 
 
-
-void testCallback(Control *sender, int type) {
-    fpr("testcallback");
-}
-
-// #include <WebSocketsServer.h>
-
-    extern "C" void app_main() {
-    initArduino();
-
-
-    { // wifi连接部分
+    {// wifi连接部分
         mesp::ConfigStore wificonfig("wificonfig");
 
         string Wifi_ssid = wificonfig.get("Wifi_ssid", "");
@@ -212,43 +207,43 @@ void testCallback(Control *sender, int type) {
 
         fpr("WiFi Connected to AP");
         fpr("IP Address: ", WiFi.localIP()[0], ".", WiFi.localIP()[1], ".", WiFi.localIP()[2], ".", WiFi.localIP()[3]);
-    } // wifi连接部分
+    }// wifi连接部分
 
 
-    auto text = ESPUI.text("Label", testCallback, ControlColor::Dark, "Initial value");
-    ESPUI.addControl(ControlType::Max, "", "32", ControlColor::None, text);
 
-    ESPUI.begin("web 标题");
-
-    { // Mqtt和打印机配置
+    {// Mqtt和打印机配置
+        using namespace config;
         mesp::ConfigStore Mqttconfig("Mqttconfig");
 
-        config::bambu_ip = Mqttconfig.get("Mqtt_ip", "");
-        config::Mqtt_pass= Mqttconfig.get("Mqtt_pass", "");
-        config::device_serial = Mqttconfig.get("device_serial", "");
+        bambu_ip = Mqttconfig.get("Mqtt_ip", "192.168.1.1");
+        Mqtt_pass = Mqttconfig.get("Mqtt_pass", "");
+        device_serial = Mqttconfig.get("device_serial", "");
 
+        if (Mqtt_pass == "") {
+            // 等待新输入
+        }
+        while (true) {
+            fpr("当前MQTT配置", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
+            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, device_serial, callback_fun);
 
-
-        return;
-
-        fpr("开始MQTT");
-        auto client = esp::mqtt_app_start<callback_fun>(
-            config::mqtt_server(config::bambu_ip),
-            config::mqtt_username,
-            config::Mqtt_pass);
-
-        mstd::delay(10s);
-
-        // publish(client,bambu::msg::runGcode("M190 S10"));
-        // publish(client,bambu::msg::led_on);
-
-        work(client);
-    } // Mqtt配置
+            Mqtt.state.wait((mesp::Mqttclient::mqtt_state::init));// 需要封装一下@_@
+            if (Mqtt.state == mesp::Mqttclient::mqtt_state::connected) {
+                Mqttconfig.set("Mqtt_ip", bambu_ip);
+                Mqttconfig.set("Mqtt_pass", Mqtt_pass);
+                Mqttconfig.set("device_serial", device_serial);
+                fpr("MQTT配置已保存");
+                work(std::move(Mqtt));
+                break;
+            } else {
+                // 等待新输入
+            }
+        }
+    }// Mqtt配置
 
     int cnt = 0;
     while (true) {
         mstd::delay(2000ms);
-        esp::gpio_out(esp::LED_R, cnt % 2);
+        // esp::gpio_out(esp::LED_R, cnt % 2);
         ++cnt;
     }
 
