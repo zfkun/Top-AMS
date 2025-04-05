@@ -22,7 +22,7 @@ namespace esp {
         case MQTT_EVENT_CONNECTED:
             fpr(TAG, "MQTT_EVENT_CONNECTED（MQTT连接成功）");
             // msg_id = esp_mqtt_client_subscribe(client, config::topic_subscribe(config::device_serial).c_str(), 1); // 这里不应该从config读@_@
-            msg_id = esp_mqtt_client_subscribe(client, config::topic_subscribe().c_str(), 1); // 这里不应该从config读@_@
+            msg_id = esp_mqtt_client_subscribe(client, config::topic_subscribe().c_str(), 1);// 这里不应该从config读@_@
             fpr(TAG, "发送订阅成功，msg_id=", msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
@@ -69,7 +69,7 @@ namespace esp {
             fpr(TAG, "其他事件id:", event->event_id);
             break;
         }
-    } // mqtt_event_handler
+    }// mqtt_event_handler
 
 
     template <callback_fun_ptr f>
@@ -95,7 +95,7 @@ namespace esp {
         return client;
     }
 
-} // namespace esp
+}// namespace esp
 
 
 namespace mesp {
@@ -163,7 +163,7 @@ namespace mesp {
                 fpr("其他事件id:", event->event_id);
                 break;
             }
-        } // mqtt_event_callback
+        }// mqtt_event_callback
       public:
         esp_mqtt_client_handle_t client = nullptr;
         const callback_fun_ptr event_data_fun;
@@ -174,7 +174,7 @@ namespace mesp {
             constexpr static int connected = 2;
             constexpr static int disconnected = 3;
             constexpr static int error = 4;
-        }; // mqtt_state
+        };// mqtt_state
 
         std::atomic<int> state = mqtt_state::init;
 
@@ -237,9 +237,19 @@ namespace mesp {
             }
         }
 
-    }; // Mqttclinet
+        // 等待状态变换
+        void wait() {
+            state.wait(mqtt_state::init);
+        }
+
+        // mqtt已连接
+        bool connected() const noexcept {
+            return state == mqtt_state::connected;
+        }
+
+    };// Mqttclinet
 
 
 
 
-} // mesp
+}// mesp

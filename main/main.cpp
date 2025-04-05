@@ -210,30 +210,68 @@ extern "C" void app_main() {
     }// wifi连接部分
 
 
+    using namespace config;
+    mesp::ConfigStore Mqttconfig("Mqttconfig");
+
+    bambu_ip = Mqttconfig.get("Mqtt_ip", "192.168.1.1");
+    Mqtt_pass = Mqttconfig.get("Mqtt_pass", "");
+    device_serial = Mqttconfig.get("device_serial", "");
+
+    bool mqtt_done = false;
+    if (Mqtt_pass != "") {// 有旧数据,可以先连MQTT
+        mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, device_serial, callback_fun);
+        if (Mqtt.wait(), Mqtt.connected()) {
+            work(std::move(Mqtt));
+            mqtt_done = true;
+        }
+    }
+
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/html", web.c_str());
+    });
+
+    // 配置 WebSocket 事件处理
+    ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+        if (type == WS_EVT_CONNECT) {
+            fpr("WebSocket 客户端", client->id(), "已连接\n");
+
+
+
+
+        } else if (type == WS_EVT_DISCONNECT) {
+            fpr("WebSocket 客户端 ", client->id(), "已断开\n");
+        } else if (type == WS_EVT_DATA) {
+            // 处理接收到的数据
+            // data[len] = 0;// 确保字符串终止
+            // String message = String((char *)data);
+            // fpr("message", message);
+        }
+    });
+    server.addHandler(&ws);
+
+    // 设置未找到路径的处理
+    server.onNotFound([](AsyncWebServerRequest *request) {
+        request->send(404, "text/plain", "404: Not found");
+    });
+
+    // 启动服务器
+    server.begin();
+    fpr("HTTP 服务器已启动");
+
+    return;
 
     {// Mqtt和打印机配置
-        using namespace config;
-        mesp::ConfigStore Mqttconfig("Mqttconfig");
-
-        bambu_ip = Mqttconfig.get("Mqtt_ip", "192.168.1.1");
-        Mqtt_pass = Mqttconfig.get("Mqtt_pass", "");
-        device_serial = Mqttconfig.get("device_serial", "");
-
-        if (Mqtt_pass == "") {
-            // 等待新输入
-        }
-        while (true) {
+        while (!mqtt_done) {
             fpr("当前MQTT配置", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
             mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, device_serial, callback_fun);
 
-            Mqtt.state.wait((mesp::Mqttclient::mqtt_state::init));// 需要封装一下@_@
-            if (Mqtt.state == mesp::Mqttclient::mqtt_state::connected) {
+            if (Mqtt.wait(), Mqtt.connected()) {
                 Mqttconfig.set("Mqtt_ip", bambu_ip);
                 Mqttconfig.set("Mqtt_pass", Mqtt_pass);
                 Mqttconfig.set("device_serial", device_serial);
                 fpr("MQTT配置已保存");
                 work(std::move(Mqtt));
-                break;
+                mqtt_done = true;
             } else {
                 // 等待新输入
             }
