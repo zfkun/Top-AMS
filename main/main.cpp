@@ -231,11 +231,15 @@ extern "C" void app_main() {
     });
 
     // 配置 WebSocket 事件处理
-    ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+    ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
         if (type == WS_EVT_CONNECT) {
             fpr("WebSocket 客户端", client->id(), "已连接\n");
 
-
+            DynamicJsonDocument doc(128);
+            doc["MQTT"]["done"] = mqtt_done;
+            String msg;
+            serializeJson(doc, msg);
+            client->text(msg);
 
 
         } else if (type == WS_EVT_DISCONNECT) {
