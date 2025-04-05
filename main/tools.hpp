@@ -4,8 +4,9 @@
 // #define NO_DEBUG
 
 #ifndef NO_DEBUG
+#include <WString.h>
 #include <iostream>
-#endif // !NO_DEBUG
+#endif// !NO_DEBUG
 
 
 
@@ -13,7 +14,7 @@ namespace mstd {
 
 #ifdef NO_DEBUG
     template <typename T, typename... V>
-    inline constexpr void fpr(T &&a, V &&...v) {} // fpr
+    inline constexpr void fpr(T &&a, V &&...v) {}// fpr
 #else
     template <typename T>
     inline constexpr void fpr(T &&x) {
@@ -23,10 +24,17 @@ namespace mstd {
     inline constexpr void fpr(T &&a, V &&...v) {
         std::cout << std::forward<T>(a);
         fpr(std::forward<V>(v)...);
-    } // fpr
+    }// fpr
+
+    inline constexpr void fpr(const String &x) {
+        std::cout << x.c_str() << std::endl;
+    }
+    inline constexpr void fpr(String &&x) {
+        std::cout << x.c_str() << std::endl;
+    }
 
     // 未来可考虑扩展到web前端输出
-#endif // NO_DEBUG
+#endif// NO_DEBUG
 
 
 
@@ -42,7 +50,7 @@ namespace mstd {
 
 
     template <typename T>
-    void atomic_wait_un(std::atomic<T> &value, T target) { //@_@可以考虑加入mstd
+    void atomic_wait_un(std::atomic<T> &value, T target) {//@_@可以考虑加入mstd
         auto old_value = value.load();
         while (old_value != target) {
             value.wait(old_value);
@@ -50,7 +58,7 @@ namespace mstd {
         }
     }
 
-} // mstd
+}// mstd
 
 using mstd::fpr;
 using namespace std::literals::chrono_literals;
