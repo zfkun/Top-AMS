@@ -19,7 +19,7 @@ NamespaceIndentation: All # 命名空间缩进
 
 MaxEmptyLinesToKeep: 5  # 连续空行的最大数量
 
-; ReflowComments: false  # 不自动重排注释内容
+ReflowComments: false  # 不自动重排注释内容
 SpacesBeforeTrailingComments: 0
 SpacesAfterTrailingComments: 0
 SpacesInLineBreaks: true    # 在换行运算符（如 <<, >>）前后加空格

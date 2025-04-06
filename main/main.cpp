@@ -16,6 +16,8 @@
 #include "espIO.hpp"
 #include "espMQTT.hpp"
 
+#include "channel.hpp"
+
 using std::string;
 
 
@@ -113,7 +115,9 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) {// 
 }// callback
 
 
-void work(mesp::Mqttclient client) {// 需要更好名字
+void work(mesp::Mqttclient client) {            // 需要更好名字
+    client.subscribe(config::topic_subscribe());// 订阅消息
+
     int old_extruder = extruder;
     while (true) {
 
@@ -207,7 +211,7 @@ extern "C" void app_main() {
         }
 
         fpr("WiFi Connected to AP");
-        fpr("IP Address: ", WiFi.localIP()[0], ".", WiFi.localIP()[1], ".", WiFi.localIP()[2], ".", WiFi.localIP()[3]);
+        fpr("IP Address: ", (int)WiFi.localIP()[0], ".", (int)WiFi.localIP()[1], ".", (int)WiFi.localIP()[2], ".", (int)WiFi.localIP()[3]);
     }// wifi连接部分
 
 
@@ -215,36 +219,8 @@ extern "C" void app_main() {
     using namespace ArduinoJson;
     using std::string;
 
-    mesp::ConfigStore Mqttconfig("Mqttconfig");
-
-    bambu_ip = Mqttconfig.get("Mqtt_ip", "192.168.1.1");
-    Mqtt_pass = Mqttconfig.get("Mqtt_pass", "");
-    device_serial = Mqttconfig.get("device_serial", "");
-    std::atomic<bool> mqtt_done = false;
-
-    auto sendMQTT = [&](AsyncWebSocket &ws) {
-        JsonDocument doc;
-        // fpr("mqtt_done:", mqtt_done);
-        doc["MQTT"]["done"] = mqtt_done;
-        doc["MQTT"]["bambu_ip"] = bambu_ip;
-        doc["MQTT"]["Mqtt_pass"] = Mqtt_pass;
-        doc["MQTT"]["device_serial"] = device_serial;
-        String msg;
-        serializeJson(doc, msg);
-        ws.textAll(msg);
-    };
-
-
-
-    if (Mqtt_pass != "") {// 有旧数据,可以先连MQTT
-        mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, device_serial, callback_fun);
-        Mqtt.wait();
-        if (Mqtt.connected()) {
-            work(std::move(Mqtt));
-            mqtt_done = true;
-            fpr("MQTT连接成功");
-        }
-    }
+    using Mqttconfig_t = std::array<string, 3>;
+    mstd::channel_lock<Mqttconfig_t> Mqttconfig_channel;
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/html", web.c_str());
@@ -254,22 +230,21 @@ extern "C" void app_main() {
     ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
         if (type == WS_EVT_CONNECT) {
             fpr("WebSocket 客户端", client->id(), "已连接\n");
-            sendMQTT(ws);
+            // sendMQTT(ws);
         } else if (type == WS_EVT_DISCONNECT) {
             fpr("WebSocket 客户端 ", client->id(), "已断开\n");
         } else if (type == WS_EVT_DATA) {// 处理接收到的数据
-
+            fpr("收到ws数据");
             data[len] = 0;// 确保字符串终止
 
             JsonDocument doc;
             deserializeJson(doc, data);
 
-            if (doc.containsKey("MQTT")) {
-                bambu_ip = doc["MQTT"]["bambu_ip"].as<string>();
-                Mqtt_pass = doc["MQTT"]["Mqtt_pass"].as<string>();
-                device_serial = doc["MQTT"]["device_serial"].as<string>();
-                mqtt_done = true;
-                mqtt_done.notify_all();
+            if (doc["MQTT"]["bambu_ip"].as<string>() != "") {
+                Mqttconfig_channel.emplace(Mqttconfig_t{
+                    doc["MQTT"]["bambu_ip"].as<string>(),
+                    doc["MQTT"]["Mqtt_pass"].as<string>(),
+                    doc["MQTT"]["device_serial"].as<string>()});
             }// MQTT
         }
     });
@@ -284,26 +259,63 @@ extern "C" void app_main() {
     server.begin();
     fpr("HTTP 服务器已启动");
 
+    {// 打印机Mqtt配置
+        auto sendMQTT = [&](AsyncWebSocket &ws, bool done = true) {
+            JsonDocument doc;
+            doc["MQTT"]["done"] = done;
+            doc["MQTT"]["bambu_ip"] = bambu_ip;
+            doc["MQTT"]["Mqtt_pass"] = Mqtt_pass;
+            doc["MQTT"]["device_serial"] = device_serial;
+            String msg;
+            serializeJson(doc, msg);
+            ws.textAll(msg);
+        };
 
-    {// Mqtt和打印机配置
-        while (true) {
-            mqtt_done.wait(false);
+        mesp::ConfigStore Mqttconfig("Mqttconfig");
 
-            fpr("当前MQTT配置", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
-            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, device_serial, callback_fun);
+        bambu_ip = Mqttconfig.get("Mqtt_ip", "192.168.1.1");
+        Mqtt_pass = Mqttconfig.get("Mqtt_pass", "");
+        device_serial = Mqttconfig.get("device_serial", "");
+
+        if (Mqtt_pass != "") {// 有旧数据,可以先连MQTT
+            fpr("当前MQTT配置\n", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
+            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, Mqtt_pass, callback_fun);
             Mqtt.wait();
             if (Mqtt.connected()) {
+                fpr("MQTT连接成功");
+                sendMQTT(ws);
+                work(std::move(Mqtt));// 启动任务,阻塞
+            } else {
+                //Mqtt错误反馈
+            }
+        }//if (Mqtt_pass != "")
+
+        while (true) {
+            fpr("等待Mqtt配置");
+            auto temp = Mqttconfig_channel.pop();
+            fpr(123312);
+            bambu_ip = temp[0];
+            Mqtt_pass = temp[1];
+            device_serial = temp[2];
+            fpr("当前MQTT配置\n", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
+            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, Mqtt_pass, callback_fun);
+            Mqtt.wait();
+            if (Mqtt.connected()) {
+                fpr("MQTT连接成功");
+                sendMQTT(ws);
                 Mqttconfig.set("Mqtt_ip", bambu_ip);
                 Mqttconfig.set("Mqtt_pass", Mqtt_pass);
                 Mqttconfig.set("device_serial", device_serial);
-                fpr("MQTT配置已保存");
-                sendMQTT(ws);
-                work(std::move(Mqtt));// 启动任务
-                break;
-            } else
-                mqtt_done = false;
-        }
-    }// Mqtt配置
+
+                work(std::move(Mqtt));// 启动任务,阻塞
+            } else {
+                //Mqtt错误反馈
+            }
+
+        }// 打印机Mqtt配置
+    }
+
+
 
     int cnt = 0;
     while (true) {
@@ -311,6 +323,5 @@ extern "C" void app_main() {
         // esp::gpio_out(esp::LED_R, cnt % 2);
         ++cnt;
     }
-
     return;
 }
