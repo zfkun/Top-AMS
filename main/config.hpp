@@ -32,8 +32,8 @@ namespace config {
     inline const auto uload_time = 5s;// 退料运转时间
     inline const auto load_time = 6s; // 进料运转时间,时间要比退料久一些
 
-    inline const auto forward_click = GPIO_NUM_NC;// 进料微动
-    inline const auto back_click = GPIO_NUM_NC;   // 退料微动
+    // inline const auto forward_click = GPIO_NUM_NC;// 进料微动
+    // inline const auto back_click = GPIO_NUM_NC;   // 退料微动
 
 
     inline std::array<motor, 16> motors{

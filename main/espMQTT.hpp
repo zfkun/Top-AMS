@@ -178,13 +178,6 @@ namespace mesp {
 
         std::atomic<int> state = mqtt_state::init;
 
-        // 连接成功
-        // esp_event_handler_t event_connected = [](void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {};
-        // // 断开连接
-        // esp_event_handler_t event_diconnected = [](void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {};
-        // // 订阅成功
-        // esp_event_handler_t event_subscribed = [](void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {};
-
         Mqttclient(const string &server, const string &user, const string &pass, callback_fun_ptr f)
             : event_data_fun(f) {
             esp_mqtt_client_config_t mqtt_cfg{};
@@ -205,6 +198,7 @@ namespace mesp {
                 error_check(esp_mqtt_client_stop(client));
             error_check(esp_mqtt_client_destroy(client));
         }
+        
         Mqttclient(const Mqttclient &) = delete;
         Mqttclient &operator=(const Mqttclient &) = delete;
         Mqttclient(Mqttclient &&r) noexcept
