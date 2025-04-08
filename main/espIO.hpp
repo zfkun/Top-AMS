@@ -16,12 +16,11 @@
 #include "nvs_flash.h"
 
 
-
 #include "driver/gpio.h"
 #include "esp_timer.h"
 #include "freertos/queue.h"
+
 #include "tools.hpp"
-// #include <array>
 #include <chrono>
 #include <tuple>
 #include <vector>
@@ -77,7 +76,7 @@ namespace esp {
         gpio_set_level(IO, value);
     }//gpio_out_OD
 
-
+    //输入这块建议该用Arduion的,还带消抖
 
     using gpin_t = std::tuple<gpio_num_t, std::chrono::steady_clock::time_point>;//可能叫button更好
 

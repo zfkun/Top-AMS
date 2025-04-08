@@ -40,7 +40,7 @@ inline constexpr int 进料完成 = 768;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-inline void webfpr(AsyncWebSocket &ws, const string &str) {
+inline void webfpr(AsyncWebSocket& ws, const string& str) {
     fpr("wsmsg: ", str);
     JsonDocument doc;
     doc["log"] = str;
@@ -50,8 +50,8 @@ inline void webfpr(AsyncWebSocket &ws, const string &str) {
 }
 
 
-void publish(esp_mqtt_client_handle_t client, const std::string &msg) {
-    esp::gpio_out(esp::LED_L, true);
+void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
+    esp::gpio_out(config::LED_L, true);
     // mstd::delay(2s);
     fpr("发送消息:", msg);
     int msg_id = esp_mqtt_client_publish(client, config::topic_publish().c_str(), msg.c_str(), msg.size(), 0, 0);
@@ -60,11 +60,11 @@ void publish(esp_mqtt_client_handle_t client, const std::string &msg) {
     else
         fpr("发送成功,消息id=", msg_id);
     // fpr(TAG, "binary sent with msg_id=%d", msg_id);
-    esp::gpio_out(esp::LED_L, false);
+    esp::gpio_out(config::LED_L, false);
     mstd::delay(2s);//@_@这些延时还可以调整看看
 }
 
-void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) {// 接受到信息的回调
+void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 接受到信息的回调
     // fpr(json);
     using namespace ArduinoJson;
     JsonDocument doc;
@@ -128,19 +128,25 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string &json) {// 
 }// callback
 
 
+
 void work(mesp::Mqttclient client) {// 需要更好名字
 
-    auto fpr = [](const string &r) { webfpr(ws, r); };
+    auto fpr = [](const string& r) { webfpr(ws, r); };
 
     client.subscribe(config::topic_subscribe());// 订阅消息
 
     int old_extruder = extruder;
     while (true) {
 
-        esp::gpio_out(esp::LED_R, true);
+        esp::gpio_out(config::LED_R, true);
         fpr("等待换料");
         extruder.wait(old_extruder);
-        esp::gpio_out(esp::LED_R, false);
+        esp::gpio_out(config::LED_R, false);
+
+        if (config::motors[old_extruder - 1].forward == config::LED_R) [[unlikely]] {
+            config::LED_R = GPIO_NUM_NC;
+            config::LED_L = GPIO_NUM_NC;
+        }//使用到了通道7,关闭代码中的LED控制
 
         publish(client, bambu::msg::uload);
         fpr("发送了退料命令,等待退料完成");
@@ -194,7 +200,6 @@ const std::string web = R"rawliteral(
 
 extern "C" void app_main() {
 
-    
 
 
     {// wifi连接部分
@@ -241,7 +246,7 @@ extern "C" void app_main() {
 
     std::atomic<bool> mqtt_done{false};
 
-    auto sendMQTT = [&](AsyncWebSocket &ws) {
+    auto sendMQTT = [&](AsyncWebSocket& ws) {
         JsonDocument doc;
         if (mqtt_done)
             doc["log"] = "MQTT连接成功";
@@ -255,12 +260,12 @@ extern "C" void app_main() {
     };
 
     {//服务器配置部分
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
             request->send(200, "text/html", web.c_str());
         });
 
         // 配置 WebSocket 事件处理
-        ws.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+        ws.onEvent([&](AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
             if (type == WS_EVT_CONNECT) {
                 fpr("WebSocket 客户端", client->id(), "已连接\n");
                 sendMQTT(ws);
@@ -284,7 +289,7 @@ extern "C" void app_main() {
         server.addHandler(&ws);
 
         // 设置未找到路径的处理
-        server.onNotFound([](AsyncWebServerRequest *request) {
+        server.onNotFound([](AsyncWebServerRequest* request) {
             request->send(404, "text/plain", "404: Not found");
         });
 
