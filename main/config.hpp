@@ -32,19 +32,22 @@ namespace config {
     inline const auto uload_time = 5s;// 退料运转时间
     inline const auto load_time = 6s; // 进料运转时间,时间要比退料久一些
 
-    // inline const auto forward_click = GPIO_NUM_NC;// 进料微动
+    inline const auto forward_click = GPIO_NUM_7;// 进料微动,缓存机构预留
     // inline const auto back_click = GPIO_NUM_NC;   // 退料微动
 
+    inline constexpr gpio_num_t LED_R = GPIO_NUM_12;
+    inline constexpr gpio_num_t LED_L = GPIO_NUM_13;
 
     inline std::array<motor, 16> motors{
         // 电机要使用的GPIO
-        motor{GPIO_NUM_3, GPIO_NUM_2}// 通道1,前向GPIO,后向GPIO
-        ,
-        motor{GPIO_NUM_5, GPIO_NUM_4}// 通道2
-        ,
-        motor{GPIO_NUM_NC, GPIO_NUM_NC}// 通道3
-        ,
-        motor{GPIO_NUM_NC, GPIO_NUM_NC}// 通道4
+        motor{GPIO_NUM_2, GPIO_NUM_3},  // 通道1,前向GPIO,后向GPIO
+        motor{GPIO_NUM_10, GPIO_NUM_6}, // 通道2
+        motor{GPIO_NUM_5, GPIO_NUM_4},  // 通道3
+        motor{GPIO_NUM_8, GPIO_NUM_9},  // 通道4
+        motor{GPIO_NUM_0, GPIO_NUM_1},  // 通道5
+        motor{GPIO_NUM_20, GPIO_NUM_21},// 通道6
+        motor{GPIO_NUM_12, GPIO_NUM_13},// 通道7,GPIO12,13为灯,避免冲突需要将灯定义改为NC
+        motor{GPIO_NUM_18, GPIO_NUM_19},// 通道8,GPIO18,19和USB冲突,需要带串口芯片或者无协议供电
     };// motors
     // 小白用户自定义电机使用GPIO时
     // 请仔细查询你开发板的针脚定义
@@ -61,12 +64,12 @@ namespace config {
     //**********************用户配置区结束******************************
 
 
-    inline string mqtt_server(const string &ip = bambu_ip) { return "mqtts://" + ip + ":8883"; }
+    inline string mqtt_server(const string& ip = bambu_ip) { return "mqtts://" + ip + ":8883"; }
     inline string mqtt_username = "bblp";
-    inline string topic_subscribe(const string &_device_serial = device_serial) {
+    inline string topic_subscribe(const string& _device_serial = device_serial) {
         return "device/" + _device_serial + "/report";
     }
-    inline string topic_publish(const string &_device_serial = device_serial) {
+    inline string topic_publish(const string& _device_serial = device_serial) {
         return "device/" + _device_serial + "/request";
     }
 

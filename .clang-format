@@ -26,4 +26,7 @@ SpacesInLineBreaks: true    # 在换行运算符（如 <<, >>）前后加空格
 # SpacesInParentheses: false  # 括号内不加空格（保持紧凑）
 # SpacesInSquareBrackets: false  # 数组方括号内不加空格
 
+ReferenceAlignment: Left  # T&
+PointerAlignment: Left    # T*
+
 #https://zhuanlan.zhihu.com/p/356143396
