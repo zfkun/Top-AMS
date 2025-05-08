@@ -36,7 +36,7 @@ namespace config {
     // inline const auto back_click = GPIO_NUM_NC;   // 退料微动
 
     inline gpio_num_t LED_R = GPIO_NUM_12;
-    inline  gpio_num_t LED_L = GPIO_NUM_13;//暂未使用
+    inline gpio_num_t LED_L = GPIO_NUM_13;//暂未使用
 
     inline std::array<motor, 16> motors{
         // 电机要使用的GPIO
