@@ -1,12 +1,15 @@
-file(GLOB LIB_SRCS
-    "../managed_components/s00500_ESPUI/src/*.cpp"
-)
+# file(GLOB LIB_SRCS
+#     "../managed_components/s00500_ESPUI/src/*.cpp"
+# )
 
 
 idf_component_register(
     SRCS 
-    ${LIB_SRCS}
+    # ${LIB_SRCS}
     "main.cpp"
-    INCLUDE_DIRS "."
-    "../managed_components/s00500_ESPUI/src"
+    INCLUDE_DIRS ""
+    # "../managed_components/s00500_ESPUI/src"
 )
+
+# idf_component_register(SRCS "hello_world_main.c"
+                    # INCLUDE_DIRS "")
