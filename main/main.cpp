@@ -1,8 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
-// #include <ESPUI.h>
-// #include <semaphore>
+
 
 // #include <esp_mq
 
@@ -43,13 +42,14 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 inline void webfpr(AsyncWebSocket& ws, const string& str) {
-    fpr("wsmsg: ", str);
+    mstd::fpr("wsmsg: ", str);
     JsonDocument doc;
     doc["log"] = str;
     String msg;
     serializeJson(doc, msg);
     ws.textAll(msg);
 }
+
 
 
 void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
@@ -85,7 +85,7 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     if (bed_target_temper > 0 && bed_target_temper < 17) {// 读到的温度是通道
         if (gcode_state == "PAUSE") {
             // mstd::delay(4s);//确保暂停动作(3.5s)完成
-            mstd::delay(4500ms);            // 貌似4s还是有可能会哟ubug
+            mstd::delay(4500ms);// 貌似4s还是有可能会哟ubug
             if (bed_target_temper_max > 0) {// 似乎热床置零会导致热端固定到90
                 publish(client, bambu::msg::runGcode(
                                     std::string("M190 S") + std::to_string(bed_target_temper_max)// 恢复原来的热床温度
@@ -96,7 +96,7 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
             if (extruder.exchange(bed_target_temper) != bed_target_temper) {
                 fpr("唤醒换料程序");
                 pause_lock = true;
-                extruder.notify_one();      // 唤醒耗材切换
+                extruder.notify_one();// 唤醒耗材切换
             } else if (!pause_lock.load()) {// 可能会收到旧消息
                 fpr("同一耗材,无需换料");
                 publish(client, bambu::msg::print_resume);// 无须换料
@@ -181,7 +181,7 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         // }
 
         publish(client, bambu::msg::print_resume);// 暂停恢复
-        mstd::delay(4s);                          // 等待命令落实
+        mstd::delay(4s);// 等待命令落实
         esp::gpio_out(config::motors[old_extruder - 1].forward, true);
         mstd::delay(7s);// 辅助进料时间,@_@也可以考虑放在config
         esp::gpio_out(config::motors[old_extruder - 1].forward, false);
@@ -196,9 +196,7 @@ void work(mesp::Mqttclient client) {// 需要更好名字
 
 
 
-const std::string web = R"rawliteral(
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport"content="width=device-width, initial-scale=1.0"><title>AMS控制台</title><style>:root{--primary-color:#2c3e50;--secondary-color:#3498db;--success-color:#27ae60;--danger-color:#e74c3c}body{margin:0;font-family:'Segoe UI',system-ui;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);color:#333}.status-bar{display:flex;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,0.95);box-shadow:0 2px 10px rgba(0,0,0,0.1);font-size:14px}.control-panel{max-width:480px;margin:20px auto;background:rgba(255,255,255,0.98);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);padding:24px;box-sizing:border-box}h3{margin-top:0;color:var(--primary-color);border-bottom:1px solid#eee;padding-bottom:12px}.channel-list{margin:16px 0}.channel-item{display:flex;align-items:center;padding:12px;margin:8px 0;background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.05);transition:all 0.2s}.channel-item:hover{box-shadow:0 4px 8px rgba(0,0,0,0.1)}.color-indicator{width:24px;height:24px;border-radius:50%;margin-right:12px;border:1px solid rgba(0,0,0,0.1)}.channel-info{flex:1}.channel-name{font-weight:500}.channel-material{font-size:0.9em;color:#666}.auto-reload-switch{position:relative;display:inline-block;width:48px;height:24px;margin-left:12px}.auto-reload-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.4s;border-radius:24px}.auto-reload-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}input:checked+.auto-reload-slider{background-color:var(--success-color)}input:checked+.auto-reload-slider:before{transform:translateX(24px)}.input-group{margin-bottom:16px}.input-group label{display:block;margin-bottom:6px;font-size:14px;color:#555}.input-group input,.input-group select{width:100%;padding:10px;border:1px solid#ddd;border-radius:6px;font-size:14px;box-sizing:border-box}.action-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:24px}.action-btn{padding:12px;background:var(--secondary-color);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;transition:all 0.2s;text-align:center}.action-btn:hover{opacity:0.9}.action-btn:active{transform:scale(0.98)}.action-btn.danger{background:var(--danger-color)}.printer-input-group{display:flex;gap:8px;margin:16px 0}.printer-input{flex:1;padding:10px;border:1px solid#ddd;border-radius:6px;font-size:14px}.send-btn{padding:10px 16px;background:var(--success-color);color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px}.log-panel{margin-top:24px;background:#f9f9f9;border-radius:8px;padding:16px}.log-content{height:200px;overflow-y:auto;background:#fff;border:1px solid#eee;border-radius:4px;padding:8px;font-family:monospace;font-size:13px}.log-entry{margin-bottom:4px;line-height:1.4}.hidden{display:none}.tab-buttons{display:flex;margin-bottom:16px;border-bottom:1px solid#eee}.tab-btn{padding:8px 16px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-size:14px}.tab-btn.active{border-bottom-color:var(--secondary-color);color:var(--secondary-color);font-weight:500}.status-icon{margin:0 8px}.connected{color:#00ff00}.disconnected{color:#ff0000}</style></head><body><div class="status-bar"><!--<span id="connection-status">未连接</span>--><div><span id="ESP-dot"class="status-icon disconnected">●</span><span id="wifi-status">ESP</span></div><div><span id="mqtt-dot"class="status-icon disconnected">●</span><span id="mqtt-status">MQTT</span></div></div><div class="control-panel"><div class="tab-buttons"><button class="tab-btn active"onclick="showTab('config-panel')">打印机配置</button><button class="tab-btn"onclick="showTab('main-panel')">主控制</button><button class="tab-btn"onclick="showTab('channel-panel')">通道管理</button></div><div id="config-panel"><!--<h3>网络配置</h3>--><div class="input-group"><label>打印机ip地址</label><input type="text"id="bambu-ip"placeholder="192.168.1.1"></div><div class="input-group"><label>MQTT密码</label><input type="text"id="mqtt-pass"placeholder="输入MQTT密码"></div><div class="input-group"><label>设备序列号</label><input type="text"id="device-serial"placeholder="XXXXXXXXXXXXXXX"><!--可以加一个如何查看设备序列号的说明@_@--></div><div class="action-buttons"><button class="action-btn"onclick="sendMQTT()">连接打印机</button><!--<button class="action-btn"onclick="showTab('main-panel')">取消</button>--><button class="action-btn"onclick="testfun()">取消</button></div></div><div id="main-panel"class="hidden"><div class="log-panel"><h3>运行日志</h3><div class="log-content"id="log-content"></div></div></div><div id="channel-panel"class="hidden"></div></div><script>const ws=new WebSocket('ws://'+window.location.hostname+'/ws');const ESP_dot=document.getElementById('ESP-dot');const mqtt_dot=document.getElementById('mqtt-dot');let currentChannels=[];ws.onopen=function(){ESP_dot.classList.replace('disconnected','connected')};ws.onclose=function(){ESP_dot.classList.replace('connected','disconnected')};ws.onmessage=function(event){const data=JSON.parse(event.data);if(data.MQTT){if(data.MQTT.done==true){mqtt_dot.classList.replace('disconnected','connected')}else{mqtt_dot.classList.replace('connected','disconnected')}const bambu_ip=document.getElementById('bambu-ip');bambu_ip.value=data.MQTT.bambu_ip;const mqtt_pass=document.getElementById('mqtt-pass');mqtt_pass.value=data.MQTT.Mqtt_pass;const device_serial=document.getElementById('device-serial');device_serial.value=data.MQTT.device_serial}if(data.log){addLog(data.log)}};ws.onerror=function(error){};function showTab(tabId){document.querySelectorAll('.tab-btn').forEach(btn=>{btn.classList.remove('active')});event.target.classList.add('active');document.getElementById('main-panel').classList.add('hidden');document.getElementById('config-panel').classList.add('hidden');document.getElementById('channel-panel').classList.add('hidden');document.getElementById(tabId).classList.remove('hidden')}function sendMQTT(){const doc={MQTT:{bambu_ip:document.getElementById('bambu-ip').value,Mqtt_pass:document.getElementById('mqtt-pass').value,device_serial:document.getElementById('device-serial').value}};ws.send(JSON.stringify(doc));showTab('main-panel')}function addLog(message){const logElement=document.getElementById('log-content');const logEntry=document.createElement('div');logEntry.className='log-entry';logEntry.textContent=message;logElement.appendChild(logEntry);logElement.scrollTop=logElement.scrollHeight}function testfun(){ESP_dot.classList.replace('disconnected','connected')}</script></body></html>
-)rawliteral";
+#include "index.hpp"
 
 extern "C" void app_main() {
 

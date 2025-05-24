@@ -5,3 +5,4 @@ managed_components/
 .vscode/
 localconfig.hpp
 temp/
+main/index.hpp
