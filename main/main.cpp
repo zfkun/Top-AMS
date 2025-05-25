@@ -19,6 +19,8 @@
 
 #include "esp_timer.h"
 
+#include "web_sync.hpp"
+
 using std::string;
 
 
@@ -36,10 +38,11 @@ inline constexpr int 退料完成 = 0;// 同正常
 inline constexpr int 进料检查 = 262;
 inline constexpr int 进料冲刷 = 263;// 推测
 inline constexpr int 进料完成 = 768;
-
+//@_@应该放在一个枚举类里
 
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
+// AsyncWebSocket ws("/ws");
+AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 
 inline void webfpr(AsyncWebSocket& ws, const string& str) {
     mstd::fpr("wsmsg: ", str);
@@ -85,7 +88,7 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     if (bed_target_temper > 0 && bed_target_temper < 17) {// 读到的温度是通道
         if (gcode_state == "PAUSE") {
             // mstd::delay(4s);//确保暂停动作(3.5s)完成
-            mstd::delay(4500ms);// 貌似4s还是有可能会哟ubug
+            mstd::delay(4500ms);// 貌似4s还是有可能会有bug
             if (bed_target_temper_max > 0) {// 似乎热床置零会导致热端固定到90
                 publish(client, bambu::msg::runGcode(
                                     std::string("M190 S") + std::to_string(bed_target_temper_max)// 恢复原来的热床温度
@@ -198,6 +201,7 @@ void work(mesp::Mqttclient client) {// 需要更好名字
 
 #include "index.hpp"
 
+
 extern "C" void app_main() {
 
 
@@ -242,6 +246,7 @@ extern "C" void app_main() {
 
     using Mqttconfig_t = std::array<string, 3>;
     mstd::channel_lock<Mqttconfig_t> Mqttconfig_channel;
+    mesp::wsValue<bool> mqtt_done("mqtt_done", false);
 
     std::atomic<bool> mqtt_done{false};
 
@@ -268,6 +273,13 @@ extern "C" void app_main() {
             if (type == WS_EVT_CONNECT) {
                 fpr("WebSocket 客户端", client->id(), "已连接\n");
                 sendMQTT(ws);
+
+                JsonDocument doc;
+                for (const auto& x : mesp::ws_value_map) {
+                    JsonObject obj = doc.as<JsonObject>();
+                    x.second(obj);
+                }// 发送所有注册的值
+
             } else if (type == WS_EVT_DISCONNECT) {
                 fpr("WebSocket 客户端 ", client->id(), "已断开\n");
             } else if (type == WS_EVT_DATA) {// 处理接收到的数据
@@ -276,6 +288,19 @@ extern "C" void app_main() {
 
                 JsonDocument doc;
                 deserializeJson(doc, data);
+
+                // 遍历 data 字段下的所有 jsonobj
+                if (doc.containsKey("data") && doc["data"].is<JsonArray>()) {
+                    for (JsonObject obj : doc["data"].as<JsonArray>()) {
+                        if (obj.containsKey("name")) {
+                            std::string name = obj["name"].as<std::string>();
+                            auto it = mesp::ws_value_map.find(name);
+                            if (it != mesp::ws_value_map.end()) {
+                                it->second(obj);// 调用 map 里的回调
+                            }
+                        }
+                    }
+                }
 
                 if (doc["MQTT"]["bambu_ip"].as<string>() != "") {
                     Mqttconfig_channel.emplace(Mqttconfig_t{

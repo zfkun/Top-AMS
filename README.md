@@ -13,29 +13,29 @@
 ### 主控模块
 - [合宙esp32C3](https://wiki.luatos.com/chips/esp32c3/board.html)
 - PCB版(如果你只需要双色,也可以考虑直接在面包板上接线)
-- 电机芯片
-<br>之后放上PCB版的嘉立创链接以及电机芯片的具体型号 
-
-- | 通道 | 前向GPIO | 后向GPIO | 备注 |
-  |:-------:|:-------|:-------|:-------:|
-  | 通道1 | GPIO2 | GPIO3 |
-  | 通道2 | GPIO10 | GPIO6 |
-  | 通道3 | GPIO5 | GPIO4 |
-  | 通道4 | GPIO8 | GPIO9 |
-  | 通道5 | GPIO0 | GPIO1 |
-  | 通道6 | GPIO20 | GPIO21 |
-  | 通道7 | GPIO12 | GPIO13 | 和LED灯冲突 |
-  | 通道8 | GPIO18 | GPIO19 | 和USB冲突 |
+- 电机芯片<br>之后放上PCB版的嘉立创链接以及电机芯片的具体型号 
+-
+  | 通道  | 前向GPIO | 后向GPIO |    备注     |
+  | :---: | :------- | :------- | :---------: |
+  | 通道1 | GPIO2    | GPIO3    |
+  | 通道2 | GPIO10   | GPIO6    |
+  | 通道3 | GPIO5    | GPIO4    |
+  | 通道4 | GPIO8    | GPIO9    |
+  | 通道5 | GPIO0    | GPIO1    |
+  | 通道6 | GPIO20   | GPIO21   |
+  | 通道7 | GPIO12   | GPIO13   | 和LED灯冲突 |
+  | 通道8 | GPIO18   | GPIO19   |  和USB冲突  |
 
   typeC口如果是由不停协商充电协议的充电器供电,或者使用espidf调试刷入等,GPIO18,19就会有电平变化<br>
-  经典版带串口的不会有这个问题
+  经典版带串口芯片的不会有这个问题
 ### 上下料模块
 - 上下料模块有两种电机方案,这两种方案在与主控的接线上没有不同
-- [N20电机方案](hard\N20电机方案\README.md)
-- [TT电机方案](hard\TT电机方案\README.md)
+- [N20电机方案](hard/N20电机方案/README.md)
+- [TT电机方案](hard/TT电机方案/README.md)
 
 ### 刷入固件
 - [固件刷入教程](https://docs.espressif.com/projects/esp-test-tools/zh_CN/latest/esp32/production_stage/tools/flash_download_tool.html)
+- 固件刷完要重启
 ### esp配网
 - 使用微信小程序 **一键配网**
 - 配网协议选择 **SmartConfig** 
@@ -66,4 +66,5 @@
   - mqtt断开
   - 因为料线刚好没了,无法退线的的报错
 - 合入缓冲微动
+- 更小白的固件刷入教程
   

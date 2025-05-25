@@ -339,7 +339,8 @@
                     Mqtt_pass: document.getElementById('mqtt-pass').value,
                     device_serial: document.getElementById('device-serial').value
                 }
-            }; ws.send(JSON.stringify(doc));
+            }; 
+            ws.send(JSON.stringify(doc));
             showTab('main-panel')
         }
 
