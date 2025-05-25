@@ -244,6 +244,19 @@
             font-size: 14px
         }
 
+        .color-picker {
+            /* 隐藏原生颜色选择器 */
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* @_@感觉没效果啊 */
+
         .tab-btn.active {
             border-bottom-color: var(--secondary-color);
             color: var(--secondary-color);
@@ -297,7 +310,249 @@
                 <div class="log-content" id="log-content"></div>
             </div>
         </div>
-        <div id="channel-panel" class="hidden"></div>
+
+        <div id="channel-panel" class="hidden">
+            <div class="title-and-time">
+                <div class="feed-time-group">
+                    <div class="feed-time">
+                        <label for="feed-in-time-input">进料时间(毫秒): </label>
+                        <input type="number" id="load_time" value="5000" min="1000">
+                    </div>
+                    <div class="feed-time">
+                        <label for="feed-out-time-input">退料时间(毫秒): </label>
+                        <input type="number" id="uload_time" value="5000" min="1000">
+                    </div>
+                </div>
+                <!-- 添加当前使用中的通道提示 -->
+                <div id="current-channel-tip">当前通道: <i id="this-channel"></i>暂无</div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>通道</th>
+                        <th>颜色</th>
+                        <th>材料名字</th>
+                        <th>续料通道</th>
+                        <th>电机控制</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> 通道1 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PLTG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendMotor(1,'motor_forward')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <!-- 重复其他通道行 -->
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td> 通道2 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td> 通道3 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td> 通道4 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td> 通道5 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td> 通道6 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td> 通道7 </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- 修改为普通文本框 -->
+                        <td>
+                            通道8
+                        </td>
+                        <td>
+                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
+                        </td>
+                        <td>PETG</td>
+                        <!-- 修改为下拉框 -->
+                        <td>
+                            <select class="material-channel-select">
+                                <option value="1">通道1</option>
+                                <option value="2">通道2</option>
+                                <option value="3">通道3</option>
+                                <option value="4">通道4</option>
+                                <option value="5">通道5</option>
+                                <option value="6">通道6</option>
+                                <option value="7">通道7</option>
+                                <option value="8">通道8</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button onclick="sendJson('正转')">正转</button>
+                            <button onclick="sendJson('反转')">反转</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- <div class="func-buttons">
+                        <button onclick="sendJson('收回材料')">收回材料</button>
+                        <button onclick="sendJson('切换通道 (当前:6)')">切换通道 (当前:6)</button>
+                        <button onclick="sendJson('卸载耗材')">卸载耗材</button>
+                        <button class="config-btn" onclick="sendJson('AMS配置')">AMS配置</button>
+                        <button onclick="sendJson('多设备切换')">多设备切换</button>
+                        <button onclick="sendJson('操作说明')">操作说明</button>
+                    </div> -->
+        </div>
+
     </div>
 
     <script>
@@ -333,6 +588,12 @@
                             break;
                         case 'device_serial':
                             document.getElementById('device-serial').value = item.value;
+                            break;
+                        case 'load_time':  // 新增进料时间处理
+                            document.getElementById('load_time').value = item.value;
+                            break;
+                        case 'uload_time': // 新增退料时间处理
+                            document.getElementById('uload_time').value = item.value;
                             break;
                     }
                 });
@@ -373,6 +634,16 @@
             ws.send(JSON.stringify(doc));
             showTab('main-panel')
         }
+        function sendMotor(_motor_id, _atcive) {
+            const doc = {
+                action: {
+                    command: _atcive,
+                    motor_id: _motor_id
+                }
+            };
+            ws.send(JSON.stringify(doc));
+        }
+
 
         function addLog(message) {
             const logElement = document.getElementById('log-content');
@@ -382,6 +653,7 @@
             logElement.appendChild(logEntry);
             logElement.scrollTop = logElement.scrollHeight
         }
+
 
 
     </script>

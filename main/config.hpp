@@ -31,9 +31,8 @@ namespace config {
     //**********************用户配置区开始******************************
 
 
-
-    inline const auto uload_time = 5s;// 退料运转时间
-    inline const auto load_time = 6s;// 进料运转时间,时间要比退料久一些
+    inline mesp::wsStoreValue<int> load_time("load_time", 6000);// 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time("uload_time", 5000);// 退料运转时间
 
     inline const auto forward_click = GPIO_NUM_7;// 进料微动,缓存机构预留
     // inline const auto back_click = GPIO_NUM_NC;   // 退料微动
@@ -79,7 +78,7 @@ namespace config {
         return "device/" + _device_serial + "/request";
     }
 
-
+    
 
 
 

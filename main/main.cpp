@@ -44,6 +44,23 @@ AsyncWebServer server(80);
 // AsyncWebSocket ws("/ws");
 AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 
+inline mstd::channel_lock<std::function<void()>> async_channel;//异步任务通道
+
+inline void motor_forward(int moter_id) {
+    esp::gpio_out(config::motors[moter_id - 1].forward, true);
+    mstd::delay(config::load_time.value);
+    esp::gpio_out(config::motors[moter_id - 1].forward, false);
+}
+inline void motor_backward(int moter_id) {
+    esp::gpio_out(config::motors[moter_id - 1].backward, true);
+    mstd::delay(config::uload_time.value);
+    esp::gpio_out(config::motors[moter_id - 1].backward, false);
+}
+
+
+
+
+
 inline void webfpr(AsyncWebSocket& ws, const string& str) {
     mstd::fpr("wsmsg: ", str);
     JsonDocument doc;
@@ -69,6 +86,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
     esp::gpio_out(config::LED_L, false);
     mstd::delay(2s);//@_@这些延时还可以调整看看
 }
+
 
 void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 接受到信息的回调
     // fpr(json);
@@ -160,7 +178,7 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         fpr("退料完成,需要退线,等待退线完");
 
         esp::gpio_out(config::motors[old_extruder - 1].backward, true);
-        mstd::delay(config::uload_time);
+        mstd::delay(config::uload_time.value);
         // 这里可以检查一下线确实退出来了
         esp::gpio_out(config::motors[old_extruder - 1].backward, false);
         mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
@@ -168,7 +186,7 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         fpr("进线");
         old_extruder = extruder;
         esp::gpio_out(config::motors[old_extruder - 1].forward, true);
-        mstd::delay(config::load_time);
+        mstd::delay(config::load_time.value);
         esp::gpio_out(config::motors[old_extruder - 1].forward, false);
 
         // {
@@ -246,6 +264,12 @@ extern "C" void app_main() {
     using std::string;
 
 
+    std::thread async_thread([]() {
+        while (true) {
+            auto task = async_channel.pop();
+            task();
+        }
+    });
 
     std::binary_semaphore mqtt_Signal{0};
 
@@ -276,7 +300,7 @@ extern "C" void app_main() {
 
                 JsonDocument doc;
                 deserializeJson(doc, data);
-                fpr(doc);
+                fpr("ws收到的json\n", doc, "\n");
 
                 // 遍历 data 字段下的所有 jsonobj
                 // if (doc["data"].is<JsonArray>()) {
@@ -297,7 +321,25 @@ extern "C" void app_main() {
                         }
                     }
                 }//if
-            }
+
+
+                if (doc["action"]["command"].as<string>() != "") {
+                    std::string command = doc["action"]["command"].as<string>();
+                    int moter_id = doc["action"]["moter_id"] | 1;// 默认1
+                    if (command == "motor_forward") {
+                        async_channel.emplace(
+                            [moter_id]() {
+                                motor_forward(moter_id);
+                            });
+                    } else if (command == "motor_backward") {
+                        async_channel.emplace(
+                            [moter_id]() {
+                                motor_backward(moter_id);
+                            });
+                    }
+                }//电机命令
+
+            }//WS_EVT_DATA
         });
         server.addHandler(&ws);
 

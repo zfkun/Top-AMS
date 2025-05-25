@@ -40,8 +40,13 @@ namespace mstd {
 
 
     template <typename T>
-    inline void delay(const T& t) { std::this_thread::sleep_for(t); }
+    inline void delay(const T& t) {
+        std::this_thread::sleep_for(t);
+    }
 
+    inline void delay(const int& t) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(t));// 整数类型，假设是毫秒
+    }
 
     struct call_once {
         template <typename F, typename... V>
