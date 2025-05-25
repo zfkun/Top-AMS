@@ -149,7 +149,7 @@
 
         .action-buttons {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr;
             gap: 12px;
             margin-top: 24px
         }
@@ -270,19 +270,26 @@
         <div><span id="mqtt-dot" class="status-icon disconnected">●</span><span id="mqtt-status">MQTT</span></div>
     </div>
     <div class="control-panel">
-        <div class="tab-buttons"><button class="tab-btn active" onclick="showTab('config-panel')">打印机配置</button><button
-                class="tab-btn" onclick="showTab('main-panel')">主控制</button><button class="tab-btn"
-                onclick="showTab('channel-panel')">通道管理</button></div>
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab('config-panel')">打印机配置</button>
+            <button class="tab-btn" onclick="showTab('main-panel')">主控制</button>
+            <button class="tab-btn" onclick="showTab('channel-panel')">通道管理</button>
+        </div>
         <div id="config-panel"><!--<h3>网络配置</h3>-->
-            <div class="input-group"><label>打印机ip地址</label><input type="text" id="bambu-ip" placeholder="192.168.1.1">
+            <div class="input-group">
+                <label>打印机ip地址</label><input type="text" id="bambu-ip" placeholder="192.168.1.1">
             </div>
-            <div class="input-group"><label>MQTT密码</label><input type="text" id="mqtt-pass" placeholder="输入MQTT密码">
+            <div class="input-group">
+                <label>MQTT密码</label><input type="text" id="mqtt-pass" placeholder="输入MQTT密码">
             </div>
-            <div class="input-group"><label>设备序列号</label><input type="text" id="device-serial"
-                    placeholder="XXXXXXXXXXXXXXX"><!--可以加一个如何查看设备序列号的说明@_@--></div>
-            <div class="action-buttons"><button class="action-btn"
-                    onclick="sendMQTT()">连接打印机</button><!--<button class="action-btn"onclick="showTab('main-panel')">取消</button>--><button
-                    class="action-btn" onclick="testfun()">取消</button></div>
+            <div class="input-group">
+                <label>设备序列号</label><input type="text" id="device-serial"
+                    placeholder="XXXXXXXXXXXXXXX"><!--可以加一个如何查看设备序列号的说明@_@-->
+            </div>
+            <div class="action-buttons"><button class="action-btn" onclick="sendMQTT()">连接打印机</button>
+                <!--<button class="action-btn"onclick="showTab('main-panel')">取消</button>-->
+                <!-- <button class="action-btn" onclick="testfun()">取消</button> -->
+            </div>
         </div>
         <div id="main-panel" class="hidden">
             <div class="log-panel">
@@ -292,6 +299,7 @@
         </div>
         <div id="channel-panel" class="hidden"></div>
     </div>
+
     <script>
         const ws = new WebSocket('ws://' + window.location.hostname + '/ws');
         const ESP_dot = document.getElementById('ESP-dot');
@@ -306,19 +314,32 @@
         };
 
         ws.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-            if (data.MQTT) {
-                if (data.MQTT.done == true) {
-                    mqtt_dot.classList.replace('disconnected', 'connected')
-                } else {
-                    mqtt_dot.classList.replace('connected', 'disconnected')
-                } const bambu_ip = document.getElementById('bambu-ip');
-                bambu_ip.value = data.MQTT.bambu_ip;
-                const mqtt_pass = document.getElementById('mqtt-pass');
-                mqtt_pass.value = data.MQTT.Mqtt_pass;
-                const device_serial = document.getElementById('device-serial');
-                device_serial.value = data.MQTT.device_serial
-            } if (data.log) { addLog(data.log) }
+            const doc = JSON.parse(event.data);
+            if (doc.data) {
+                doc.data.forEach(item => {
+                    switch (item.name) {
+                        case 'MQTT_done':
+                            if (item.value) {
+                                mqtt_dot.classList.replace('disconnected', 'connected');
+                            } else {
+                                mqtt_dot.classList.replace('connected', 'disconnected');
+                            }
+                            break;
+                        case 'MQTT_pass':
+                            document.getElementById('mqtt-pass').value = item.value;
+                            break;
+                        case 'bambu_ip':
+                            document.getElementById('bambu-ip').value = item.value;
+                            break;
+                        case 'device_serial':
+                            document.getElementById('device-serial').value = item.value;
+                            break;
+                    }
+                });
+            }
+            if (doc.log) {
+                addLog(doc.log);
+            }
         };
 
         ws.onerror = function (error) { };
@@ -334,12 +355,21 @@
 
         function sendMQTT() {
             const doc = {
-                MQTT: {
-                    bambu_ip: document.getElementById('bambu-ip').value,
-                    Mqtt_pass: document.getElementById('mqtt-pass').value,
-                    device_serial: document.getElementById('device-serial').value
-                }
-            }; 
+                data: [
+                    {
+                        name: "MQTT_pass",
+                        value: document.getElementById('mqtt-pass').value
+                    },
+                    {
+                        name: "bambu_ip",
+                        value: document.getElementById('bambu-ip').value
+                    },
+                    {
+                        name: "device_serial",
+                        value: document.getElementById('device-serial').value
+                    }
+                ]
+            };
             ws.send(JSON.stringify(doc));
             showTab('main-panel')
         }
@@ -353,9 +383,7 @@
             logElement.scrollTop = logElement.scrollHeight
         }
 
-        function testfun() {
-            ESP_dot.classList.replace('disconnected', 'connected')
-        }
+
     </script>
 </body>
 

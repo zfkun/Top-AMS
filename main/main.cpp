@@ -60,6 +60,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
     // mstd::delay(2s);
     fpr("发送消息:", msg);
     int msg_id = esp_mqtt_client_publish(client, config::topic_publish().c_str(), msg.c_str(), msg.size(), 0, 0);
+    //@_@这里的publish用到了topic_publish(默认),耦合了
     if (msg_id < 0)
         fpr("发送失败");
     else
@@ -244,24 +245,9 @@ extern "C" void app_main() {
     using namespace ArduinoJson;
     using std::string;
 
-    using Mqttconfig_t = std::array<string, 3>;
-    mstd::channel_lock<Mqttconfig_t> Mqttconfig_channel;
-    mesp::wsValue<bool> mqtt_done("mqtt_done", false);
 
-    std::atomic<bool> mqtt_done{false};
 
-    auto sendMQTT = [&](AsyncWebSocket& ws) {
-        JsonDocument doc;
-        if (mqtt_done)
-            doc["log"] = "MQTT连接成功";
-        doc["MQTT"]["done"] = mqtt_done.load();
-        doc["MQTT"]["bambu_ip"] = bambu_ip;
-        doc["MQTT"]["Mqtt_pass"] = Mqtt_pass;
-        doc["MQTT"]["device_serial"] = device_serial;
-        String msg;
-        serializeJson(doc, msg);
-        ws.textAll(msg);
-    };
+    std::binary_semaphore mqtt_Signal{0};
 
     {//服务器配置部分
         server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
@@ -272,14 +258,16 @@ extern "C" void app_main() {
         ws.onEvent([&](AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
             if (type == WS_EVT_CONNECT) {
                 fpr("WebSocket 客户端", client->id(), "已连接\n");
-                sendMQTT(ws);
 
                 JsonDocument doc;
-                for (const auto& x : mesp::ws_value_map) {
-                    JsonObject obj = doc.as<JsonObject>();
-                    x.second(obj);
-                }// 发送所有注册的值
+                JsonObject root = doc.to<JsonObject>();
+                root.createNestedArray("data");// 创建data数组
 
+                for (auto& [name, to_json] : mesp::ws_value_to_json)
+                    to_json(doc);// 添加当前值到data数组
+                mesp::sendJson(doc);// 发送所有注册的值
+
+                fpr(doc);
             } else if (type == WS_EVT_DISCONNECT) {
                 fpr("WebSocket 客户端 ", client->id(), "已断开\n");
             } else if (type == WS_EVT_DATA) {// 处理接收到的数据
@@ -288,26 +276,27 @@ extern "C" void app_main() {
 
                 JsonDocument doc;
                 deserializeJson(doc, data);
+                fpr(doc);
 
                 // 遍历 data 字段下的所有 jsonobj
+                // if (doc["data"].is<JsonArray>()) {
+                //     for (JsonObject obj : doc["data"].as<JsonArray>()) {
+                //         if (obj["name"].is<const char*>()) {
                 if (doc.containsKey("data") && doc["data"].is<JsonArray>()) {
                     for (JsonObject obj : doc["data"].as<JsonArray>()) {
                         if (obj.containsKey("name")) {
                             std::string name = obj["name"].as<std::string>();
-                            auto it = mesp::ws_value_map.find(name);
-                            if (it != mesp::ws_value_map.end()) {
-                                it->second(obj);// 调用 map 里的回调
+                            auto it = mesp::ws_value_update.find(name);
+                            if (it != mesp::ws_value_update.end()) {
+                                it->second(obj);//更新值
+                            }
+
+                            if (name == "device_serial") {//需要连接mqtt,放这里感觉有些耦合
+                                mqtt_Signal.release();
                             }
                         }
                     }
-                }
-
-                if (doc["MQTT"]["bambu_ip"].as<string>() != "") {
-                    Mqttconfig_channel.emplace(Mqttconfig_t{
-                        doc["MQTT"]["bambu_ip"].as<string>(),
-                        doc["MQTT"]["Mqtt_pass"].as<string>(),
-                        doc["MQTT"]["device_serial"].as<string>()});
-                }// MQTT
+                }//if
             }
         });
         server.addHandler(&ws);
@@ -324,53 +313,44 @@ extern "C" void app_main() {
 
 
     {// 打印机Mqtt配置
-        mesp::ConfigStore Mqttconfig("Mqttconfig");
 
-        bambu_ip = Mqttconfig.get("Mqtt_ip", "192.168.1.1");
-        Mqtt_pass = Mqttconfig.get("Mqtt_pass", "");
-        device_serial = Mqttconfig.get("device_serial", "");
-
-        if (Mqtt_pass != "") {// 有旧数据,可以先连MQTT
-            fpr("当前MQTT配置\n", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
-            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, Mqtt_pass, callback_fun);
+        if (MQTT_pass != "") {// 有旧数据,可以先连MQTT
+            fpr("当前MQTT配置\n", bambu_ip, '\n', MQTT_pass, '\n', device_serial);
+            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, MQTT_pass, callback_fun);
             webfpr(ws, "MQTT连接中...");
             Mqtt.wait();
             if (Mqtt.connected()) {
                 fpr("MQTT连接成功");
-                sendMQTT(ws);
+                MQTT_done = true;
+
                 work(std::move(Mqtt));// 启动任务,阻塞
             } else {
+                MQTT_done = false;
                 //Mqtt错误反馈分类
                 webfpr(ws, "MQTT连接错误");
             }
-        }//if (Mqtt_pass != "")
+        }//if (MQTT_pass != "")
 
         while (true) {
             fpr("等待Mqtt配置");
-            auto temp = Mqttconfig_channel.pop();
-            fpr(123312);
-            bambu_ip = temp[0];
-            Mqtt_pass = temp[1];
-            device_serial = temp[2];
-            fpr("当前MQTT配置\n", bambu_ip, '\n', Mqtt_pass, '\n', device_serial);
-            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, Mqtt_pass, callback_fun);
+            mqtt_Signal.acquire();// 等待mqtt配置
+            fpr("当前MQTT配置\n", bambu_ip, '\n', MQTT_pass, '\n', device_serial);
+            mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, MQTT_pass, callback_fun);
             webfpr(ws, "MQTT连接中...");
             Mqtt.wait();
             if (Mqtt.connected()) {
                 fpr("MQTT连接成功");
-                sendMQTT(ws);
-                Mqttconfig.set("Mqtt_ip", bambu_ip);
-                Mqttconfig.set("Mqtt_pass", Mqtt_pass);
-                Mqttconfig.set("device_serial", device_serial);
+                MQTT_done = true;
 
                 work(std::move(Mqtt));// 启动任务,阻塞
             } else {
                 //Mqtt错误反馈分类
+                MQTT_done = false;
+
                 webfpr(ws, "MQTT连接错误");
             }
-
-        }// 打印机Mqtt配置
-    }
+        }
+    }// 打印机Mqtt配置
 
 
 

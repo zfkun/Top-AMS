@@ -9,6 +9,8 @@
 #include "localconfig.hpp"
 #endif
 
+#include "web_sync.hpp"
+
 namespace config {
 
     // using string = String;
@@ -56,9 +58,12 @@ namespace config {
     // GPIO_NUM_NC表示不使用
 
 
-    inline string bambu_ip;
-    inline string device_serial;
-    inline string Mqtt_pass;
+
+
+    mesp::wsValue<bool> MQTT_done("MQTT_done", false);
+    mesp::wsValue<string> bambu_ip("bambu_ip", "192.168.1.1");
+    mesp::wsValue<string> MQTT_pass("MQTT_pass", "");
+    mesp::wsValue<string> device_serial("device_serial", "");
 
     //**********************用户配置区结束******************************
     //**********************用户配置区结束******************************

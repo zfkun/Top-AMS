@@ -11,10 +11,18 @@
 
 namespace mesp {
 
-    inline std::map<std::string, std::function<void(const JsonObject&)>> ws_value_map;
+    inline std::map<std::string, std::function<void(const JsonObject&)>> ws_value_update;
+    inline std::map<std::string, std::function<void(JsonDocument&)>> ws_value_to_json;
     //全局的ws服务
     inline AsyncWebSocket ws_server("/ws");//现在似乎也没有使用非全局的ws的需求,就先统一为这个了
     inline ConfigStore ws_config("ws");
+
+    //发送json到前端
+    inline void sendJson(const JsonDocument& doc, AsyncWebSocket& ws = ws_server) {
+        String msg;
+        serializeJson(doc, msg);
+        ws.textAll(msg);
+    };
 
     //与前端的同步类型
     template <typename T>
@@ -27,14 +35,19 @@ namespace mesp {
 
         template <typename... V>
         wsValue(const std::string& n, V&&... v) : name(n), value(std::forward<V>(v)...) {
-            ws_value_map[name] = [this](const JsonObject& obj) {
+            ws_value_update[name] = [this](const JsonObject& obj) {
                 this->set(obj);
-            };//注册到全局map中
+            };
+            ws_value_to_json[name] = [this](JsonDocument& doc) {
+                this->to_json(doc);
+            };
+            //注册到全局map中
             //可以考虑加个检查,如果有重复的就报错@_@
             //如果要扩展为非全局,可以给构造加一个入参,成员加一个引用
         }
         ~wsValue() {
-            ws_value_map.erase(name);
+            ws_value_update.erase(name);
+            ws_value_to_json.erase(name);
         }
 
         wsValue(const wsValue&) = delete;
@@ -43,12 +56,17 @@ namespace mesp {
         wsValue& operator=(wsValue&&) = delete;
         //先关掉所有拷贝移动
 
+        operator const value_type&() const noexcept {
+            return value;
+        }
+
         void to_json(JsonDocument& doc) const {//非基本类型,就需要特化这个成员函数
             //构造对应的json
             //ArduinoJson想要分块构造貌似只能这样传?
-            JsonObject root = doc.to<JsonObject>();
-            root["name"] = name;
-            root["value"] = value;
+            JsonArray data = doc["data"].as<JsonArray>();
+            JsonObject item = data.createNestedObject();
+            item["name"] = name;
+            item["value"] = value;
         }
 
         void set(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
@@ -61,17 +79,15 @@ namespace mesp {
         void update() const {
             //构造对应的json且发送
             JsonDocument doc;
+            JsonObject root = doc.to<JsonObject>();
+            root.createNestedArray("data");// 创建data数组
 
-            to_json(doc);
-
-            String msg;
-            serializeJson(doc, msg);
-            ws_server.textAll(msg);
+            to_json(doc);// 添加当前值到data数组
+            sendJson(doc);
         }
         //自然,这种每个元素只发自己的json方式,在网络IO上称不上高效,不过写起来比较方便
 
 
-        //可以考虑加个vT为原子类型的偏序
         wsValue& operator=(const value_type& v) {
             value = v;
 
@@ -84,44 +100,33 @@ namespace mesp {
             return *this;
         }
 
+
+        bool operator==(const value_type& v) const noexcept {
+            return value == v;
+        }
     };//ws_value
+    
+    template <typename T>
+    inline std::ostream& operator<<(std::ostream& os, const wsValue<T>& v) {
+        return os << v.value;
+    }
+
 
     //与前端的同步类型,会写硬盘
     template <typename T>
-    struct wsStoreValue {
-        //@_@静态断言,T只能基本类型
-        using value_type = T;
+    struct wsStoreValue : wsValue<T> {
 
-        const std::string name;//值名,不可改变
-        value_type value;
+        using typename wsValue<T>::value_type;
+        using wsValue<T>::name;
+        using wsValue<T>::value;
+        using wsValue<T>::update;
 
         template <typename... V>
-        wsStoreValue(const std::string& n, V&&... v) : name(n), value(std::forward<V>(v)...) {
-            ws_value_map[name] = [this](const JsonObject& obj) {
-                this->set(obj);
-            };//注册到全局map中
-            //可以考虑加个检查,如果有重复的就报错@_@
-            //如果要扩展为非全局,可以给构造加一个入参,成员加一个引用
-
+        wsStoreValue(const std::string& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
+            // 从配置中加载初始值，如果没有则使用传入的默认值
             value = ws_config.get(name, value);
         }
-        ~wsStoreValue() {
-            ws_value_map.erase(name);
-        }
 
-        wsStoreValue(const wsStoreValue&) = delete;
-        wsStoreValue& operator=(const wsStoreValue&) = delete;
-        wsStoreValue(wsStoreValue&&) = delete;
-        wsStoreValue& operator=(wsStoreValue&&) = delete;
-        //先关掉所有拷贝移动
-
-        void to_json(JsonDocument& doc) const {//非基本类型,就需要特化这个成员函数
-            //构造对应的json
-            //ArduinoJson想要分块构造貌似只能这样传?
-            JsonObject root = doc.to<JsonObject>();
-            root["name"] = name;
-            root["value"] = value;
-        }
 
         void set(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
             if (!obj.isNull()) {//为空就只更新前端状态的意思
@@ -131,20 +136,7 @@ namespace mesp {
             update();
         }
 
-        void update() const {
-            //构造对应的json且发送
-            JsonDocument doc;
 
-            to_json(doc);
-
-            String msg;
-            serializeJson(doc, msg);
-            ws_server.textAll(msg);
-        }
-        //自然,这种每个元素只发自己的json方式,在网络IO上称不上高效,不过写起来比较方便
-
-
-        //可以考虑加个vT为原子类型的偏序
         wsStoreValue& operator=(const value_type& v) {
             value = v;
             ws_config.set(name, value);
@@ -162,7 +154,7 @@ namespace mesp {
 
     };//ws_value
 
-    
+
 
 }//mesp
 
