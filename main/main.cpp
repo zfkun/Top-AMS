@@ -47,14 +47,23 @@ AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 inline mstd::channel_lock<std::function<void()>> async_channel;//异步任务通道
 
 inline void motor_forward(int moter_id) {
-    esp::gpio_out(config::motors[moter_id - 1].forward, true);
+    moter_id--;
+    if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
+        config::LED_R = GPIO_NUM_NC;
+        config::LED_L = GPIO_NUM_NC;
+    }//使用到了通道7,关闭代码中的LED控制
+    esp::gpio_out(config::motors[moter_id].forward, true);
     mstd::delay(config::load_time.value);
-    esp::gpio_out(config::motors[moter_id - 1].forward, false);
+    esp::gpio_out(config::motors[moter_id].forward, false);
 }
 inline void motor_backward(int moter_id) {
-    esp::gpio_out(config::motors[moter_id - 1].backward, true);
+    if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
+        config::LED_R = GPIO_NUM_NC;
+        config::LED_L = GPIO_NUM_NC;
+    }//使用到了通道7,关闭代码中的LED控制
+    esp::gpio_out(config::motors[moter_id].backward, true);
     mstd::delay(config::uload_time.value);
-    esp::gpio_out(config::motors[moter_id - 1].backward, false);
+    esp::gpio_out(config::motors[moter_id].backward, false);
 }
 
 
@@ -171,6 +180,7 @@ void work(mesp::Mqttclient client) {// 需要更好名字
             config::LED_R = GPIO_NUM_NC;
             config::LED_L = GPIO_NUM_NC;
         }//使用到了通道7,关闭代码中的LED控制
+        //@_@2025年5月26日23:12:47写到这里,把这里的电机控制也改为调用函数
 
         publish(client, bambu::msg::uload);
         fpr("发送了退料命令,等待退料完成");

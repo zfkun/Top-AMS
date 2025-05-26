@@ -359,7 +359,7 @@
                         </td>
                         <td>
                             <button onclick="sendMotor(1,'motor_forward')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(1,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <!-- 重复其他通道行 -->
@@ -384,8 +384,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(2,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(2,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <tr>
@@ -409,8 +409,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(3,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(3,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <tr>
@@ -434,8 +434,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(4,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(4,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <tr>
@@ -459,8 +459,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(5,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(5,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <tr>
@@ -484,8 +484,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(6,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(6,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <tr>
@@ -509,8 +509,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(7,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(7,'motor_backward')">反转</button>
                         </td>
                     </tr>
                     <tr>
@@ -536,8 +536,8 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendJson('正转')">正转</button>
-                            <button onclick="sendJson('反转')">反转</button>
+                            <button onclick="sendMotor(8,'motor_forward')">正转</button>
+                            <button onclick="sendMotor(8,'motor_backward')">反转</button>
                         </td>
                     </tr>
                 </tbody>
@@ -614,6 +614,7 @@
             document.getElementById(tabId).classList.remove('hidden')
         }
 
+        // 发送MQTT参数
         function sendMQTT() {
             const doc = {
                 data: [
@@ -634,6 +635,7 @@
             ws.send(JSON.stringify(doc));
             showTab('main-panel')
         }
+        //控制电机参数
         function sendMotor(_motor_id, _atcive) {
             const doc = {
                 action: {
