@@ -326,7 +326,7 @@
                     <span id="uload-time-status" class="status-icon"></span>
                 </div>
                 <!-- 添加当前使用中的通道提示 -->
-                <div id="current-channel-tip">当前通道: <i id="this-channel"></i>暂无</div>
+                <div id="current-channel-tip">当前通道: <i id="this-channel"></i></div>
             </div>
 
             <table>
@@ -596,6 +596,9 @@
                             break;
                         case 'uload_time': // 新增退料时间处理
                             document.getElementById('uload_time').value = item.value;
+                            break;
+                        case "extruder":
+                            document.getElementById('this-channel').textContent = item.value;
                             break;
                     }
                 });

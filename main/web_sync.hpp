@@ -80,7 +80,7 @@ namespace mesp {
         }
 
         void set_value(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
-            if (!obj.isNull()) {//为空就只更新前端状态的意思
+            if (!obj.isNull()) {//json为空就只更新前端状态的意思
                 set_value(obj["value"].as<value_type>());
             }
             update();
@@ -109,12 +109,10 @@ namespace mesp {
 
         wsValue& operator=(const value_type& v) {
             set_value(v);
-
             update();
             return *this;
         }
         wsValue& operator=(value_type&& v) noexcept {
-            // value = std::move(v);
             set_value(std::move(v));
             update();
             return *this;
@@ -140,43 +138,41 @@ namespace mesp {
         using wsValue<T>::name;
         using wsValue<T>::value;
         using wsValue<T>::get_value;
-        using wsValue<T>::set_value;
+        // using wsValue<T>::set_value;
         using wsValue<T>::update;
 
         template <typename... V>
         wsStoreValue(const std::string& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
             // 从配置中加载初始值，如果没有则使用传入的默认值
-            set_value(ws_config.get(name, get_value()));
+            wsValue<T>::set_value(ws_config.get(name, get_value()));
+            ws_value_update[name] = [this](const JsonObject& obj) {
+                this->wsStoreValue::set_value(obj);
+            };
         }
 
 
-        void set(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
+        void set_value(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
             if (!obj.isNull()) {//为空就只更新前端状态的意思
-                set_value(obj["value"].as<value_type>());
+                wsValue<T>::set_value(obj["value"].as<value_type>());//1.这里已经有update()
                 ws_config.set(name, get_value());
-            }
-            update();
+            } else//2.所以要else
+                update();
         }
 
 
         wsStoreValue& operator=(const value_type& v) {
             set_value(v);
             ws_config.set(name, get_value());
-
-            update();
             return *this;
         }
         wsStoreValue& operator=(value_type&& v) noexcept {
-            // value = std::move(v);
             set_value(std::move(v));
             ws_config.set(name, get_value());
-
-            update();
             return *this;
         }
 
     };//ws_value
 
-
+    //外面加到两个map后其实set_value的设计有点多余了,还有get_value(),@_@之后修改
 
 }//mesp

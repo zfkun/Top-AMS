@@ -25,6 +25,7 @@ using std::string;
 
 
 int bed_target_temper_max = 0;
+mesp::wsValue<std::string> ws_extruder("extruder", "1");//@_@先不存盘,也不给前端修改
 std::atomic<int> extruder = 1;// 1-16,初始通道默认为1
 int sequence_id = -1;
 // std::atomic<int> print_error = 0;
@@ -67,6 +68,23 @@ inline void motor_run(int moter_id, bool fwd) {
     }
 }//motor_run
 
+template <typename T>
+inline void motor_run(int moter_id, bool fwd, T&& t) {
+    moter_id--;
+    if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
+        config::LED_R = GPIO_NUM_NC;
+        config::LED_L = GPIO_NUM_NC;
+    }//使用到了通道7,关闭代码中的LED控制
+    if (fwd) {
+        esp::gpio_out(config::motors[moter_id].forward, true);
+        mstd::delay(std::forward<T>(t));// 使用传入的延时
+        esp::gpio_out(config::motors[moter_id].forward, false);
+    } else {
+        esp::gpio_out(config::motors[moter_id].backward, true);
+        mstd::delay(std::forward<T>(t));// 使用传入的延时
+        esp::gpio_out(config::motors[moter_id].backward, false);
+    }
+}//motor_run
 
 
 
@@ -165,18 +183,18 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
 
 void work(mesp::Mqttclient client) {// 需要更好名字
 
-    auto fpr = [](const string& r) { webfpr(ws, r); };
+    auto fpr = [](const string& r) { webfpr(ws, r); };//重设一下fpr
 
     client.subscribe(config::topic_subscribe());// 订阅消息
 
     int old_extruder = extruder;
     while (true) {
-
         esp::gpio_out(config::LED_R, true);
         fpr("等待换料");
         extruder.wait(old_extruder);
         esp::gpio_out(config::LED_R, false);
 
+        ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(extruder.load());
 
         publish(client, bambu::msg::uload);
         fpr("发送了退料命令,等待退料完成");
@@ -206,10 +224,12 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         // }
 
         publish(client, bambu::msg::print_resume);// 暂停恢复
-        mstd::delay(4s);// 等待命令落实
+        mstd::delay(4s);// 等待命令落实,这个4s挺准
         esp::gpio_out(config::motors[old_extruder - 1].forward, true);
         mstd::delay(7s);// 辅助进料时间,@_@也可以考虑放在config
         esp::gpio_out(config::motors[old_extruder - 1].forward, false);
+
+        ws_extruder = std::to_string(extruder.load());// 更新前端显示的耗材编号
 
         pause_lock = false;
     }// while
@@ -223,8 +243,32 @@ void work(mesp::Mqttclient client) {// 需要更好名字
 
 #include "index.hpp"
 
+volatile bool running_flag{false};
 
 extern "C" void app_main() {
+
+    //微动任务
+    std::thread task([]() {
+        pinMode(config::forward_click, INPUT_PULLUP);
+        attachInterrupt(
+            digitalPinToInterrupt(config::forward_click),
+            []() {
+                running_flag = true;
+            },
+            FALLING);
+
+        while (true) {
+            if (!running_flag) {
+                mstd::delay(200ms);
+                continue;
+            }
+            fpr("微动触发");
+            motor_run(extruder, true, 1s);
+            running_flag = false;
+        }
+    });
+
+
 
 
     {// wifi连接部分
@@ -332,12 +376,12 @@ extern "C" void app_main() {
                     if (command == "motor_forward") {
                         async_channel.emplace(
                             [moter_id]() {
-                                motor_run(moter_id,true);
+                                motor_run(moter_id, true);
                             });
                     } else if (command == "motor_backward") {
                         async_channel.emplace(
                             [moter_id]() {
-                                motor_run(moter_id,false);
+                                motor_run(moter_id, false);
                             });
                     }
                 }//电机控制
