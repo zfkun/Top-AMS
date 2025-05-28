@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 
+#include "channel.hpp"
 #include "esptools.hpp"
 #include <ArduinoJson.hpp>
 #include <ESPAsyncWebServer.h>
@@ -32,11 +33,12 @@ namespace mesp {
 
         const std::string name;//值名,不可改变
         value_type value;
+        mstd::lock_key key;//互斥体,用于保护value的读写
 
         template <typename... V>
-        wsValue(const std::string& n, V&&... v) : name(n), value(std::forward<V>(v)...) {
+        wsValue(const std::string& n, V&&... v) : name(n), value(value_type(std::forward<V>(v)...)) {
             ws_value_update[name] = [this](const JsonObject& obj) {
-                this->set(obj);
+                this->set_value(obj);
             };
             ws_value_to_json[name] = [this](JsonDocument& doc) {
                 this->to_json(doc);
@@ -56,8 +58,32 @@ namespace mesp {
         wsValue& operator=(wsValue&&) = delete;
         //先关掉所有拷贝移动
 
-        operator const value_type&() const noexcept {
+        value_type get_value() noexcept {
+            mstd::RAII_lock k(key);
             return value;
+        }
+        const value_type get_value() const noexcept {
+            mstd::RAII_lock k(const_cast<mstd::lock_key&>(key));
+            return value;
+        }
+        void set_value(const value_type& v) {
+            mstd::RAII_lock k(key);
+            value = v;
+        }
+        void set_value(value_type&& v) noexcept {
+            mstd::RAII_lock k(key);
+            value = std::move(v);
+        }
+
+        operator const value_type() const noexcept {
+            return get_value();
+        }
+
+        void set_value(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
+            if (!obj.isNull()) {//为空就只更新前端状态的意思
+                set_value(obj["value"].as<value_type>());
+            }
+            update();
         }
 
         void to_json(JsonDocument& doc) const {//非基本类型,就需要特化这个成员函数
@@ -66,14 +92,7 @@ namespace mesp {
             JsonArray data = doc["data"].as<JsonArray>();
             JsonObject item = data.createNestedObject();
             item["name"] = name;
-            item["value"] = value;
-        }
-
-        void set(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
-            if (!obj.isNull()) {//为空就只更新前端状态的意思
-                value = obj["value"].as<value_type>();
-            }
-            update();
+            item["value"] = get_value();
         }
 
         void update() const {
@@ -89,26 +108,27 @@ namespace mesp {
 
 
         wsValue& operator=(const value_type& v) {
-            value = v;
+            set_value(v);
 
             update();
             return *this;
         }
         wsValue& operator=(value_type&& v) noexcept {
-            value = std::move(v);
+            // value = std::move(v);
+            set_value(std::move(v));
             update();
             return *this;
         }
 
 
         bool operator==(const value_type& v) const noexcept {
-            return value == v;
+            return get_value() == v;
         }
     };//ws_value
-    
+
     template <typename T>
     inline std::ostream& operator<<(std::ostream& os, const wsValue<T>& v) {
-        return os << v.value;
+        return os << v.get_value();
     }
 
 
@@ -119,34 +139,37 @@ namespace mesp {
         using typename wsValue<T>::value_type;
         using wsValue<T>::name;
         using wsValue<T>::value;
+        using wsValue<T>::get_value;
+        using wsValue<T>::set_value;
         using wsValue<T>::update;
 
         template <typename... V>
         wsStoreValue(const std::string& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
             // 从配置中加载初始值，如果没有则使用传入的默认值
-            value = ws_config.get(name, value);
+            set_value(ws_config.get(name, get_value()));
         }
 
 
         void set(const JsonObject& obj) {//非基本类型,就需要特化这个成员函数
             if (!obj.isNull()) {//为空就只更新前端状态的意思
-                value = obj["value"].as<value_type>();
-                ws_config.set(name, value);
+                set_value(obj["value"].as<value_type>());
+                ws_config.set(name, get_value());
             }
             update();
         }
 
 
         wsStoreValue& operator=(const value_type& v) {
-            value = v;
-            ws_config.set(name, value);
+            set_value(v);
+            ws_config.set(name, get_value());
 
             update();
             return *this;
         }
         wsStoreValue& operator=(value_type&& v) noexcept {
-            value = std::move(v);
-            ws_config.set(name, value);
+            // value = std::move(v);
+            set_value(std::move(v));
+            ws_config.set(name, get_value());
 
             update();
             return *this;
@@ -157,16 +180,3 @@ namespace mesp {
 
 
 }//mesp
-
-/*
-和前端值更新思路
-更新时,初始化时,要发给前端的json
-接受到前端的json时的更改
-    需要一个地方统一处理,根据接受到json的名,来选对应的赋值函数
-    T要有自己的json处理函数
-    写一个适用基础类型的
-    然后特化每个类的
-    json格式
-    value_name 
-    
-*/

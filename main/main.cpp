@@ -46,30 +46,31 @@ AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 
 inline mstd::channel_lock<std::function<void()>> async_channel;//异步任务通道
 
-inline void motor_forward(int moter_id) {
+
+// @brief 控制电机运行(前向或后向)
+// @param moter_id 电机编号,从 1 开始
+// @param fwd 标识方向，true 表示前向，false 表示后向
+inline void motor_run(int moter_id, bool fwd) {
     moter_id--;
     if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
         config::LED_R = GPIO_NUM_NC;
         config::LED_L = GPIO_NUM_NC;
     }//使用到了通道7,关闭代码中的LED控制
-    esp::gpio_out(config::motors[moter_id].forward, true);
-    mstd::delay(config::load_time.value);
-    esp::gpio_out(config::motors[moter_id].forward, false);
-}
-inline void motor_backward(int moter_id) {
-    if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
-        config::LED_R = GPIO_NUM_NC;
-        config::LED_L = GPIO_NUM_NC;
-    }//使用到了通道7,关闭代码中的LED控制
-    esp::gpio_out(config::motors[moter_id].backward, true);
-    mstd::delay(config::uload_time.value);
-    esp::gpio_out(config::motors[moter_id].backward, false);
-}
+    if (fwd) {
+        esp::gpio_out(config::motors[moter_id].forward, true);
+        mstd::delay(config::load_time.get_value());
+        esp::gpio_out(config::motors[moter_id].forward, false);
+    } else {
+        esp::gpio_out(config::motors[moter_id].backward, true);
+        mstd::delay(config::uload_time.get_value());
+        esp::gpio_out(config::motors[moter_id].backward, false);
+    }
+}//motor_run
 
 
 
 
-
+//@brief WebSocket消息打印
 inline void webfpr(AsyncWebSocket& ws, const string& str) {
     mstd::fpr("wsmsg: ", str);
     JsonDocument doc;
@@ -80,7 +81,7 @@ inline void webfpr(AsyncWebSocket& ws, const string& str) {
 }
 
 
-
+//@brief 发布消息到MQTT服务器
 void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
     esp::gpio_out(config::LED_L, true);
     // mstd::delay(2s);
@@ -96,7 +97,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
     mstd::delay(2s);//@_@这些延时还可以调整看看
 }
 
-
+//@brief MQTT回调函数
 void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 接受到信息的回调
     // fpr(json);
     using namespace ArduinoJson;
@@ -176,30 +177,22 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         extruder.wait(old_extruder);
         esp::gpio_out(config::LED_R, false);
 
-        if (config::motors[old_extruder - 1].forward == config::LED_R) [[unlikely]] {
-            config::LED_R = GPIO_NUM_NC;
-            config::LED_L = GPIO_NUM_NC;
-        }//使用到了通道7,关闭代码中的LED控制
-        //@_@2025年5月26日23:12:47写到这里,把这里的电机控制也改为调用函数
 
         publish(client, bambu::msg::uload);
         fpr("发送了退料命令,等待退料完成");
         mstd::atomic_wait_un(ams_status, 退料完成需要退线);
         fpr("退料完成,需要退线,等待退线完");
 
-        esp::gpio_out(config::motors[old_extruder - 1].backward, true);
-        mstd::delay(config::uload_time.value);
-        // 这里可以检查一下线确实退出来了
-        esp::gpio_out(config::motors[old_extruder - 1].backward, false);
+        motor_run(old_extruder, false);// 退线
+
         mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
 
         fpr("进线");
         old_extruder = extruder;
-        esp::gpio_out(config::motors[old_extruder - 1].forward, true);
-        mstd::delay(config::load_time.value);
-        esp::gpio_out(config::motors[old_extruder - 1].forward, false);
 
-        // {
+        motor_run(old_extruder, true);// 进线
+
+        // {//旧的使用进线程序的进料过程
         // 	publish(client,bambu::msg::load);
         // 	fpr("发送了料进线命令,等待进线完成");
         // 	mstd::atomic_wait_un(ams_status,262);
@@ -339,15 +332,15 @@ extern "C" void app_main() {
                     if (command == "motor_forward") {
                         async_channel.emplace(
                             [moter_id]() {
-                                motor_forward(moter_id);
+                                motor_run(moter_id,true);
                             });
                     } else if (command == "motor_backward") {
                         async_channel.emplace(
                             [moter_id]() {
-                                motor_backward(moter_id);
+                                motor_run(moter_id,false);
                             });
                     }
-                }//电机命令
+                }//电机控制
 
             }//WS_EVT_DATA
         });

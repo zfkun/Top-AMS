@@ -312,16 +312,18 @@
         </div>
 
         <div id="channel-panel" class="hidden">
-            <div class="title-and-time">
-                <div class="feed-time-group">
-                    <div class="feed-time">
-                        <label for="feed-in-time-input">进料时间(毫秒): </label>
-                        <input type="number" id="load_time" value="5000" min="1000">
-                    </div>
-                    <div class="feed-time">
-                        <label for="feed-out-time-input">退料时间(毫秒): </label>
-                        <input type="number" id="uload_time" value="5000" min="1000">
-                    </div>
+            <div class="feed-time-group">
+                <div class="feed-time">
+                    <label for="feed-in-time-input">进料时间(毫秒): </label>
+                    <input type="number" id="load_time" value="5000" min="1000"
+                        onchange="sendKeyValue('load_time', this.value)">
+                    <span id="load-time-status" class="status-icon"></span>
+                </div>
+                <div class="feed-time">
+                    <label for="feed-out-time-input">退料时间(毫秒): </label>
+                    <input type="number" id="uload_time" value="5000" min="1000"
+                        onchange="sendKeyValue('uload_time', this.value)">
+                    <span id="uload-time-status" class="status-icon"></span>
                 </div>
                 <!-- 添加当前使用中的通道提示 -->
                 <div id="current-channel-tip">当前通道: <i id="this-channel"></i>暂无</div>
@@ -635,7 +637,7 @@
             ws.send(JSON.stringify(doc));
             showTab('main-panel')
         }
-        //控制电机参数
+        //发送电机控制参数
         function sendMotor(_motor_id, _atcive) {
             const doc = {
                 action: {
@@ -646,6 +648,18 @@
             ws.send(JSON.stringify(doc));
         }
 
+        //发送键值对
+        function sendKeyValue(_key, _value) {
+            const doc = {
+                data: [
+                    {
+                        name: _key,
+                        value: _value
+                    }
+                ]
+            };
+            ws.send(JSON.stringify(doc));
+        }
 
         function addLog(message) {
             const logElement = document.getElementById('log-content');
