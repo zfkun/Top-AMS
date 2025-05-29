@@ -58,6 +58,8 @@ namespace mesp {
         }
 
         std::string get(const std::string& key, const char* def) {
+            fpr("ker", "get");
+            fpr(def);
             return prefs.getString(key.c_str(), def).c_str();
         }
 

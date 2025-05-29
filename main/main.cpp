@@ -47,56 +47,67 @@ AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 
 inline mstd::channel_lock<std::function<void()>> async_channel;//异步任务通道
 
-
-// @brief 控制电机运行(前向或后向)
-// @param moter_id 电机编号,从 1 开始
-// @param fwd 标识方向，true 表示前向，false 表示后向
-inline void motor_run(int moter_id, bool fwd) {
-    moter_id--;
-    if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
-        config::LED_R = GPIO_NUM_NC;
-        config::LED_L = GPIO_NUM_NC;
-    }//使用到了通道7,关闭代码中的LED控制
-    if (fwd) {
-        esp::gpio_out(config::motors[moter_id].forward, true);
-        mstd::delay(config::load_time.get_value());
-        esp::gpio_out(config::motors[moter_id].forward, false);
-    } else {
-        esp::gpio_out(config::motors[moter_id].backward, true);
-        mstd::delay(config::uload_time.get_value());
-        esp::gpio_out(config::motors[moter_id].backward, false);
-    }
-}//motor_run
-
-template <typename T>
-inline void motor_run(int moter_id, bool fwd, T&& t) {
-    moter_id--;
-    if (config::motors[moter_id].forward == config::LED_R) [[unlikely]] {
-        config::LED_R = GPIO_NUM_NC;
-        config::LED_L = GPIO_NUM_NC;
-    }//使用到了通道7,关闭代码中的LED控制
-    if (fwd) {
-        esp::gpio_out(config::motors[moter_id].forward, true);
-        mstd::delay(std::forward<T>(t));// 使用传入的延时
-        esp::gpio_out(config::motors[moter_id].forward, false);
-    } else {
-        esp::gpio_out(config::motors[moter_id].backward, true);
-        mstd::delay(std::forward<T>(t));// 使用传入的延时
-        esp::gpio_out(config::motors[moter_id].backward, false);
-    }
-}//motor_run
-
-
-
 //@brief WebSocket消息打印
-inline void webfpr(AsyncWebSocket& ws, const string& str) {
-    mstd::fpr("wsmsg: ", str);
+inline void webfpr(AsyncWebSocket& ws, const string& _str) {
+    mstd::fpr("wsmsg: ", _str);
+    string str = std::to_string(esp_timer_get_time() / 1000) + "ms " + _str;
     JsonDocument doc;
     doc["log"] = str;
     String msg;
     serializeJson(doc, msg);
     ws.textAll(msg);
 }
+
+inline string last_ws_log = "日志初始化";//可能会有多个webfpr,非线程安全注意,现在单核先不管
+
+//@brief WebSocket消息打印
+inline void webfpr(const string& str) {
+    mstd::fpr("wsmsg: ", str);
+    JsonDocument doc;
+    doc["log"] = str;
+    String msg;
+    serializeJson(doc, msg);
+    ws.textAll(msg);
+    last_ws_log = str;
+}
+
+// @brief 控制电机运行(前向或后向)
+// @param moter_id 电机编号,从 1 开始
+// @param fwd 标识方向，true 表示前向，false 表示后向
+// @param t 延时
+template <typename T>
+inline void motor_run(int motor_id, bool fwd, T&& t) {
+    if (motor_id < 1 || motor_id > config::motors.size()) {
+        webfpr(std::string("电机编号错误:") + std::to_string(motor_id));
+        return;
+    }
+    motor_id--;
+    if (config::motors[motor_id].forward == config::LED_R) [[unlikely]] {
+        config::LED_R = GPIO_NUM_NC;
+        config::LED_L = GPIO_NUM_NC;
+    }//使用到了通道7,关闭代码中的LED控制
+    if (fwd) {
+        esp::gpio_out(config::motors[motor_id].forward, true);
+        mstd::delay(std::forward<T>(t));// 使用传入的延时
+        esp::gpio_out(config::motors[motor_id].forward, false);
+    } else {
+        esp::gpio_out(config::motors[motor_id].backward, true);
+        mstd::delay(std::forward<T>(t));// 使用传入的延时
+        esp::gpio_out(config::motors[motor_id].backward, false);
+    }
+}//motor_run
+
+
+// @brief 控制电机运行(前向或后向)
+// @param moter_id 电机编号,从 1 开始
+// @param fwd 标识方向，true 表示前向，false 表示后向
+inline void motor_run(int motor_id, bool fwd) {
+    motor_run(motor_id, fwd,
+              fwd ? config::load_time.get_value() : config::uload_time);
+}//motor_run
+
+
+
 
 
 //@brief 发布消息到MQTT服务器
@@ -247,6 +258,14 @@ volatile bool running_flag{false};
 
 extern "C" void app_main() {
 
+    // for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
+    //     auto& x = config::motors[i];
+    //     esp::gpio_out(x.forward, false);
+    //     esp::gpio_out(x.backward, false);
+    // }//初始化电机GPIO
+
+
+
     //微动任务
     std::thread task([]() {
         pinMode(config::forward_click, INPUT_PULLUP);
@@ -339,6 +358,7 @@ extern "C" void app_main() {
                 mesp::sendJson(doc);// 发送所有注册的值
 
                 fpr(doc);
+                webfpr(last_ws_log);
             } else if (type == WS_EVT_DISCONNECT) {
                 fpr("WebSocket 客户端 ", client->id(), "已断开\n");
             } else if (type == WS_EVT_DATA) {// 处理接收到的数据
@@ -372,16 +392,16 @@ extern "C" void app_main() {
 
                 if (doc["action"]["command"].as<string>() != "") {
                     std::string command = doc["action"]["command"].as<string>();
-                    int moter_id = doc["action"]["moter_id"] | 1;// 默认1
+                    int motor_id = doc["action"]["motor_id"] | -1;
                     if (command == "motor_forward") {
                         async_channel.emplace(
-                            [moter_id]() {
-                                motor_run(moter_id, true);
+                            [motor_id]() {
+                                motor_run(motor_id, true);
                             });
                     } else if (command == "motor_backward") {
                         async_channel.emplace(
-                            [moter_id]() {
-                                motor_run(moter_id, false);
+                            [motor_id]() {
+                                motor_run(motor_id, false);
                             });
                     }
                 }//电机控制
@@ -402,7 +422,6 @@ extern "C" void app_main() {
 
 
     {// 打印机Mqtt配置
-
         if (MQTT_pass != "") {// 有旧数据,可以先连MQTT
             fpr("当前MQTT配置\n", bambu_ip, '\n', MQTT_pass, '\n', device_serial);
             mesp::Mqttclient Mqtt(mqtt_server(bambu_ip), mqtt_username, MQTT_pass, callback_fun);

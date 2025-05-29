@@ -58,11 +58,11 @@ namespace mesp {
         wsValue& operator=(wsValue&&) = delete;
         //先关掉所有拷贝移动
 
-        value_type get_value() noexcept {
+        value_type& get_value() noexcept {
             mstd::RAII_lock k(key);
             return value;
         }
-        const value_type get_value() const noexcept {
+        const value_type& get_value() const noexcept {
             mstd::RAII_lock k(const_cast<mstd::lock_key&>(key));
             return value;
         }

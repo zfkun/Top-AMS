@@ -60,9 +60,9 @@ namespace config {
 
 
     mesp::wsValue<bool> MQTT_done("MQTT_done", false);
-    mesp::wsValue<string> bambu_ip("bambu_ip", "192.168.1.1");
-    mesp::wsValue<string> MQTT_pass("MQTT_pass", "");
-    mesp::wsValue<string> device_serial("device_serial", "");
+    mesp::wsStoreValue<string> bambu_ip("bambu_ip", "192.168.1.1");
+    mesp::wsStoreValue<string> MQTT_pass("MQTT_pass", "");
+    mesp::wsStoreValue<string> device_serial("device_serial", "");
 
     //**********************用户配置区结束******************************
     //**********************用户配置区结束******************************
