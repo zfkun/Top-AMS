@@ -5,9 +5,6 @@
 // #include <WString.h>
 #include <array>
 
-#if __has_include("localconfig.hpp")
-#include "localconfig.hpp"
-#endif
 
 #include "web_sync.hpp"
 

@@ -2,14 +2,7 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 
-
-// #include <esp_mq
-
 #include "esptools.hpp"
-
-#if __has_include("localconfig.hpp")
-#include "localconfig.hpp"
-#endif
 
 #include "bambu.hpp"
 #include "espIO.hpp"
@@ -20,6 +13,11 @@
 #include "esp_timer.h"
 
 #include "web_sync.hpp"
+
+#if __has_include("localconfig.hpp")
+#include "localconfig.hpp"
+#endif
+
 
 using std::string;
 
@@ -47,18 +45,18 @@ AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 
 inline mstd::channel_lock<std::function<void()>> async_channel;//异步任务通道
 
+inline string last_ws_log = "日志初始化";//可能会有多个webfpr,非线程安全注意,现在单核先不管
+
 //@brief WebSocket消息打印
-inline void webfpr(AsyncWebSocket& ws, const string& _str) {
-    mstd::fpr("wsmsg: ", _str);
-    string str = std::to_string(esp_timer_get_time() / 1000) + "ms " + _str;
+inline void webfpr(AsyncWebSocket& ws, const string& str) {
+    mstd::fpr("wsmsg: ", str);
     JsonDocument doc;
     doc["log"] = str;
     String msg;
     serializeJson(doc, msg);
     ws.textAll(msg);
+    last_ws_log = str;
 }
-
-inline string last_ws_log = "日志初始化";//可能会有多个webfpr,非线程安全注意,现在单核先不管
 
 //@brief WebSocket消息打印
 inline void webfpr(const string& str) {
@@ -194,6 +192,7 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
 
 void work(mesp::Mqttclient client) {// 需要更好名字
 
+
     auto fpr = [](const string& r) { webfpr(ws, r); };//重设一下fpr
 
     client.subscribe(config::topic_subscribe());// 订阅消息
@@ -207,6 +206,9 @@ void work(mesp::Mqttclient client) {// 需要更好名字
 
         ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(extruder.load());
 
+        publish(client, bambu::msg::runGcode("M211 S \nM211 X1 Y1 Z1\nM1002 push_ref_mode\nG91 \nG1 Z-1.0 F900\nM1002 pop_ref_mode\nM211 R\n"));//防止Z轴抬高
+        fpr("防止Z抬高");
+
         publish(client, bambu::msg::uload);
         fpr("发送了退料命令,等待退料完成");
         mstd::atomic_wait_un(ams_status, 退料完成需要退线);
@@ -215,6 +217,9 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         motor_run(old_extruder, false);// 退线
 
         mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
+
+        publish(client, bambu::msg::runGcode("M109 S250\nG1 E150 F500\n"));//旋转热端齿轮辅助进料
+        mstd::delay(5s);//先5s,时间可能取决于热端到250的速度,一个想法是把拉高热端提前能省点时间,但是比较难控制
 
         fpr("进线");
         old_extruder = extruder;
@@ -235,10 +240,12 @@ void work(mesp::Mqttclient client) {// 需要更好名字
         // }
 
         publish(client, bambu::msg::print_resume);// 暂停恢复
-        mstd::delay(4s);// 等待命令落实,这个4s挺准
-        esp::gpio_out(config::motors[old_extruder - 1].forward, true);
-        mstd::delay(7s);// 辅助进料时间,@_@也可以考虑放在config
-        esp::gpio_out(config::motors[old_extruder - 1].forward, false);
+
+        // mstd::delay(5s);// 等待命令落实,这个4s挺准
+        // esp::gpio_out(config::motors[old_extruder - 1].forward, true);
+        // mstd::delay(6s);// 辅助进料时间,@_@也可以考虑放在config
+        // esp::gpio_out(config::motors[old_extruder - 1].forward, false);
+        //前面辅助进料的话这里就不用了
 
         ws_extruder = std::to_string(extruder.load());// 更新前端显示的耗材编号
 
