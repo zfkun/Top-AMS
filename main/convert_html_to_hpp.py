@@ -7,12 +7,32 @@ import argparse
 
 def convert_html_to_hpp(input_file, output_file, header_str="", footer_str=""):
     try:
-        # 读取原始HTML内容
+         # 读取并处理HTML内容
+        processed_lines = []
         with open(input_file, 'r', encoding='utf-8') as f:
-            html_content = f.read()
+            for line in f:
 
+                stripped = line.lstrip()
+                stripped = stripped.rstrip()
+                # 跳过空行
+                if not stripped:
+                    continue
+                # 跳过以//开头的注释行
+                if stripped.lstrip().startswith('//'):
+                    continue
+                #注意这样无法处理//在中间的情况,需要识别并排除''中的//,比如地址
+                #还可以加上处理<->注释
+                #或者简单一些,用htmlmin过一遍,然后去掉空行
+
+
+                # 保留处理后的行
+                processed_lines.append(stripped)
+        
+        # 将所有行合并为单个字符串（无换行符）
+        compressed_html = ''.join(processed_lines)
+        
         # 拼接新内容
-        new_content = f"{header_str}\n{html_content}\n{footer_str}"
+        new_content = f"{header_str}\n{compressed_html}\n{footer_str}"
 
         # 写入HPP文件
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -46,5 +66,4 @@ if __name__ == "__main__":
         header_str=args.header,
         footer_str=args.footer
     )
-# deepseek写的,没仔细看
-# 未来也可考虑在这里压缩一下html
+

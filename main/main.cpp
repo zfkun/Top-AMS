@@ -30,6 +30,7 @@ int sequence_id = -1;
 std::atomic<int> ams_status = -1;
 std::atomic<bool> pause_lock{false};// 暂停锁
 
+std::atomic<int> hw_switch{0};//小绿点, 其实是布尔
 
 inline constexpr int 正常 = 0;
 inline constexpr int 退料完成需要退线 = 260;
@@ -124,6 +125,95 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
     mstd::delay(2s);//@_@这些延时还可以调整看看
 }
 
+
+
+
+//换料
+void change_filament(esp_mqtt_client_handle_t client, int new_extruder) {
+
+    auto fpr = [](const string& r) { webfpr(ws, r); };//重设一下fpr
+
+    fpr("开始换料");
+    // esp::gpio_out(config::LED_R, false);
+
+    //换料假定一定有旧料
+    int old_extruder = extruder;
+    ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(new_extruder);
+
+    publish(client, bambu::msg::runGcode("M211 S \nM211 X1 Y1 Z1\nM1002 push_ref_mode\nG91 \nG1 Z-1.0 F900\nM1002 pop_ref_mode\nM211 R\n"));//防止Z轴抬高
+    fpr("防止Z抬高");
+
+    publish(client, bambu::msg::uload);
+    fpr("发送了退料命令,等待退料完成");
+    mstd::atomic_wait_un(ams_status, 退料完成需要退线);
+    fpr("退料完成,需要退线,等待退线完");
+
+    motor_run(old_extruder, false);// 退线
+
+    mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
+
+    publish(client, bambu::msg::runGcode("M109 S250\nG1 E150 F500\n"));//旋转热端齿轮辅助进料
+    mstd::delay(5s);//先5s,时间可能取决于热端到250的速度,一个想法是把拉高热端提前能省点时间,但是比较难控制
+
+    fpr("进线");
+
+    motor_run(new_extruder, true);// 进线
+
+    // {//旧的使用进线程序的进料过程
+    // 	publish(client,bambu::msg::load);
+    // 	fpr("发送了料进线命令,等待进线完成");
+    // 	mstd::atomic_wait_un(ams_status,262);
+    // 	mstd::delay(2s);
+    // 	publish(client,bambu::msg::click_done);
+    // 	mstd::delay(2s);
+    // 	mstd::atomic_wait_un(ams_status,263);
+    // 	publish(client,bambu::msg::click_done);
+    // 	mstd::atomic_wait_un(ams_status,进料完成);
+    // 	mstd::delay(2s);
+    // }
+
+    publish(client, bambu::msg::print_resume);// 暂停恢复
+
+    // mstd::delay(5s);// 等待命令落实,这个4s挺准
+    // esp::gpio_out(config::motors[old_extruder - 1].forward, true);
+    // mstd::delay(6s);// 辅助进料时间,@_@也可以考虑放在config
+    // esp::gpio_out(config::motors[old_extruder - 1].forward, false);
+    //前面辅助进料的话这里就不用了
+
+    extruder = new_extruder;//换料完成
+    ws_extruder = std::to_string(new_extruder);// 更新前端显示的耗材编号
+
+    pause_lock = false;
+    fpr("换料结束");
+}// work
+/*
+ * 似乎外挂托盘的数据也能通过mqtt改动
+ */
+
+
+esp_mqtt_client_handle_t __client;
+
+//上料
+void load_filament(int extruder) {
+    // __client;//先用这个,之后解耦出来
+
+
+    ws_extruder = std::to_string(extruder);// 更新前端显示的耗材编号
+}
+
+
+void work(mesp::Mqttclient& Mqtt) {//之后应该修改好mesp::Mqttclient生命周期@_@
+    __client = Mqtt.client;
+    Mqtt.subscribe(config::topic_subscribe());// 订阅消息
+
+    int cnt = 0;
+    while (true) {
+        mstd::delay(20000ms);
+        // esp::gpio_out(esp::LED_R, cnt % 2);
+        ++cnt;
+    }
+}
+
 //@brief MQTT回调函数
 void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 接受到信息的回调
     // fpr(json);
@@ -131,12 +221,14 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, json);
 
+    mesp::print_memory_info();
 
     static int bed_target_temper = -1;
     static int nozzle_target_temper = -1;
     bed_target_temper = doc["print"]["bed_target_temper"] | bed_target_temper;
     // nozzle_target_temper = doc["print"]["nozzle_target_temper"] | nozzle_target_temper;
     std::string gcode_state = doc["print"]["gcode_state"] | "unkonw";
+    hw_switch.store(doc["print"]["hw_switch_state"] | hw_switch.load());
 
     // fpr("nozzle_target_temper:",nozzle_target_temper);
 
@@ -152,10 +244,12 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
                                     ));
             }
 
-            if (extruder.exchange(bed_target_temper) != bed_target_temper) {
+            if (extruder != bed_target_temper) {
                 fpr("唤醒换料程序");
                 pause_lock = true;
-                extruder.notify_one();// 唤醒耗材切换
+                async_channel.emplace([&]() {
+                    change_filament(client, bed_target_temper);
+                });
             } else if (!pause_lock.load()) {// 可能会收到旧消息
                 fpr("同一耗材,无需换料");
                 publish(client, bambu::msg::print_resume);// 无须换料
@@ -187,77 +281,6 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     }
 
 }// callback
-
-
-
-void work(mesp::Mqttclient client) {// 需要更好名字
-
-
-    auto fpr = [](const string& r) { webfpr(ws, r); };//重设一下fpr
-
-    client.subscribe(config::topic_subscribe());// 订阅消息
-
-    int old_extruder = extruder;
-    while (true) {
-        esp::gpio_out(config::LED_R, true);
-        fpr("等待换料");
-        extruder.wait(old_extruder);
-        esp::gpio_out(config::LED_R, false);
-
-        ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(extruder.load());
-
-        publish(client, bambu::msg::runGcode("M211 S \nM211 X1 Y1 Z1\nM1002 push_ref_mode\nG91 \nG1 Z-1.0 F900\nM1002 pop_ref_mode\nM211 R\n"));//防止Z轴抬高
-        fpr("防止Z抬高");
-
-        publish(client, bambu::msg::uload);
-        fpr("发送了退料命令,等待退料完成");
-        mstd::atomic_wait_un(ams_status, 退料完成需要退线);
-        fpr("退料完成,需要退线,等待退线完");
-
-        motor_run(old_extruder, false);// 退线
-
-        mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
-
-        publish(client, bambu::msg::runGcode("M109 S250\nG1 E150 F500\n"));//旋转热端齿轮辅助进料
-        mstd::delay(5s);//先5s,时间可能取决于热端到250的速度,一个想法是把拉高热端提前能省点时间,但是比较难控制
-
-        fpr("进线");
-        old_extruder = extruder;
-
-        motor_run(old_extruder, true);// 进线
-
-        // {//旧的使用进线程序的进料过程
-        // 	publish(client,bambu::msg::load);
-        // 	fpr("发送了料进线命令,等待进线完成");
-        // 	mstd::atomic_wait_un(ams_status,262);
-        // 	mstd::delay(2s);
-        // 	publish(client,bambu::msg::click_done);
-        // 	mstd::delay(2s);
-        // 	mstd::atomic_wait_un(ams_status,263);
-        // 	publish(client,bambu::msg::click_done);
-        // 	mstd::atomic_wait_un(ams_status,进料完成);
-        // 	mstd::delay(2s);
-        // }
-
-        publish(client, bambu::msg::print_resume);// 暂停恢复
-
-        // mstd::delay(5s);// 等待命令落实,这个4s挺准
-        // esp::gpio_out(config::motors[old_extruder - 1].forward, true);
-        // mstd::delay(6s);// 辅助进料时间,@_@也可以考虑放在config
-        // esp::gpio_out(config::motors[old_extruder - 1].forward, false);
-        //前面辅助进料的话这里就不用了
-
-        ws_extruder = std::to_string(extruder.load());// 更新前端显示的耗材编号
-
-        pause_lock = false;
-    }// while
-}// work
-/*
- * 似乎外挂托盘的数据也能通过mqtt改动
- */
-
-
-
 
 #include "index.hpp"
 
@@ -336,7 +359,7 @@ extern "C" void app_main() {
     using namespace ArduinoJson;
     using std::string;
 
-
+    //异步任务处理,线程池
     std::thread async_thread([]() {
         while (true) {
             auto task = async_channel.pop();
@@ -391,10 +414,10 @@ extern "C" void app_main() {
                             }
                         }
                     }
-                }//if
+                }//wsvalue更新部分
 
 
-                std::string command = doc["action"]["command"] | string("_null");
+                const std::string command = doc["action"]["command"] | string("_null");
                 if (command != "_null") {//处理命令json
                     if (command == "motor_forward") {//电机前向控制
                         int motor_id = doc["action"]["value"] | -1;
@@ -408,10 +431,17 @@ extern "C" void app_main() {
                             [motor_id]() {
                                 motor_run(motor_id, false);
                             });
+                    } else if (command == "load_filament") {
+                        int new_extruder = doc["action"]["value"] | -1;
+                        async_channel.emplace(
+                            [new_extruder]() {
+                                load_filament(new_extruder);
+                            });
+
                     } else {
                         fpr("未知命令:", command);
                     }
-                }
+                }//if command
 
             }//WS_EVT_DATA
         });
@@ -437,8 +467,7 @@ extern "C" void app_main() {
             if (Mqtt.connected()) {
                 fpr("MQTT连接成功");
                 MQTT_done = true;
-
-                work(std::move(Mqtt));// 启动任务,阻塞
+                work(Mqtt);
             } else {
                 MQTT_done = false;
                 //Mqtt错误反馈分类
@@ -446,7 +475,7 @@ extern "C" void app_main() {
             }
         }//if (MQTT_pass != "")
 
-        while (true) {
+        while (!MQTT_done) {
             fpr("等待Mqtt配置");
             mqtt_Signal.acquire();// 等待mqtt配置
             fpr("当前MQTT配置\n", bambu_ip, '\n', MQTT_pass, '\n', device_serial);
@@ -456,8 +485,7 @@ extern "C" void app_main() {
             if (Mqtt.connected()) {
                 fpr("MQTT连接成功");
                 MQTT_done = true;
-
-                work(std::move(Mqtt));// 启动任务,阻塞
+                work(Mqtt);
             } else {
                 //Mqtt错误反馈分类
                 MQTT_done = false;
@@ -465,13 +493,13 @@ extern "C" void app_main() {
                 webfpr(ws, "MQTT连接错误");
             }
         }
-    }// 打印机Mqtt配置
+    }
 
 
 
     int cnt = 0;
     while (true) {
-        mstd::delay(2000ms);
+        mstd::delay(20000ms);
         // esp::gpio_out(esp::LED_R, cnt % 2);
         ++cnt;
     }

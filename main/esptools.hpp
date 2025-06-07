@@ -1,9 +1,10 @@
 #pragma once
+#include "esp_heap_caps.h"
+#include "tools.hpp"
 #include <Arduino.h>
 #include <Preferences.h>
-#include <WiFi.h>
 
-#include "tools.hpp"
+#include <WiFi.h>
 
 
 namespace mesp {
@@ -72,4 +73,14 @@ namespace mesp {
             prefs.clear();
         }
     };// Preferences_type
-}// esp
+
+
+    //打印内存信息
+    inline void print_memory_info() {
+        fpr("当前可用内存: ", esp_get_free_heap_size(), "字节\n");
+        fpr("历史最小可用内存: ", esp_get_minimum_free_heap_size(), "字节\n");
+
+        // 详细堆信息（按内存类型分类）
+        // heap_caps_print_heap_info(MALLOC_CAP_DEFAULT);
+    }
+}// mesp

@@ -10,539 +10,831 @@
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
             --success-color: #27ae60;
-            --danger-color: #e74c3c
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --background-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --border-radius: 12px;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
         }
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', system-ui;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--background-gradient);
+            color: #333;
+            min-height: 100vh;
+            padding-bottom: 20px;
         }
 
         .status-bar {
             display: flex;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 12px 24px;
             background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            font-size: 14px
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px rgba(39, 174, 96, 0.5);
+        }
+
+        .status-dot.disconnected {
+            background-color: #ff0000;
         }
 
         .control-panel {
-            max-width: 480px;
-            margin: 20px auto;
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-            box-sizing: border-box
+            max-width: 900px;
+            margin: 24px auto;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--transition);
         }
 
-        h3 {
-            margin-top: 0;
+        .panel-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: #f8f9fa;
+        }
+
+        .panel-header h3 {
+            margin: 0;
             color: var(--primary-color);
-            border-bottom: 1px solid#eee;
-            padding-bottom: 12px
-        }
-
-        .channel-list {
-            margin: 16px 0
-        }
-
-        .channel-item {
+            font-weight: 600;
             display: flex;
             align-items: center;
-            padding: 12px;
-            margin: 8px 0;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s
+            gap: 8px;
         }
 
-        .channel-item:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+        .panel-header h3 i {
+            color: var(--secondary-color);
+            font-size: 1.2em;
         }
 
-        .color-indicator {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            margin-right: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.1)
+        .tab-buttons {
+            display: flex;
+            margin: 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background: #f8f9fa;
+            padding: 0 24px;
         }
 
-        .channel-info {
-            flex: 1
-        }
-
-        .channel-name {
-            font-weight: 500
-        }
-
-        .channel-material {
-            font-size: 0.9em;
-            color: #666
-        }
-
-        .auto-reload-switch {
-            position: relative;
-            display: inline-block;
-            width: 48px;
-            height: 24px;
-            margin-left: 12px
-        }
-
-        .auto-reload-slider {
-            position: absolute;
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px
+            font-size: 14px;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: var(--transition);
+            position: relative;
+            margin-bottom: -1px;
         }
 
-        .auto-reload-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%
+        .tab-btn:hover {
+            color: var(--primary-color);
         }
 
-        input:checked+.auto-reload-slider {
-            background-color: var(--success-color)
+        .tab-btn.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
         }
 
-        input:checked+.auto-reload-slider:before {
-            transform: translateX(24px)
+        .panel-content {
+            padding: 24px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
         }
 
         .input-group {
-            margin-bottom: 16px
+            margin-bottom: 0;
         }
 
         .input-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-size: 14px;
-            color: #555
+            color: #555;
+            font-weight: 500;
         }
 
         .input-group input,
         .input-group select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid#ddd;
-            border-radius: 6px;
+            padding: 12px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 14px;
-            box-sizing: border-box
+            box-sizing: border-box;
+            transition: var(--transition);
+            background: #fff;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            outline: none;
         }
 
         .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
             gap: 12px;
-            margin-top: 24px
+            margin-top: 16px;
         }
 
         .action-btn {
-            padding: 12px;
+            padding: 12px 24px;
             background: var(--secondary-color);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
-            text-align: center
+            transition: var(--transition);
+            text-align: center;
+            font-weight: 500;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .action-btn:hover {
-            opacity: 0.9
+            background: #2980b9;
+            transform: translateY(-2px);
         }
 
         .action-btn:active {
-            transform: scale(0.98)
+            transform: translateY(0);
         }
 
         .action-btn.danger {
-            background: var(--danger-color)
+            background: var(--danger-color);
         }
 
-        .printer-input-group {
-            display: flex;
-            gap: 8px;
-            margin: 16px 0
+        .action-btn.danger:hover {
+            background: #c0392b;
         }
 
-        .printer-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid#ddd;
-            border-radius: 6px;
-            font-size: 14px
-        }
-
-        .send-btn {
-            padding: 10px 16px;
+        .action-btn.success {
             background: var(--success-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px
+        }
+
+        .action-btn.success:hover {
+            background: #219653;
         }
 
         .log-panel {
             margin-top: 24px;
             background: #f9f9f9;
             border-radius: 8px;
-            padding: 16px
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .log-header {
+            background: #f1f1f1;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .log-content {
-            height: 200px;
+            height: 800px;
             overflow-y: auto;
             background: #fff;
-            border: 1px solid#eee;
-            border-radius: 4px;
-            padding: 8px;
-            font-family: monospace;
-            font-size: 13px
+            padding: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            flex: 1;
         }
 
         .log-entry {
-            margin-bottom: 4px;
-            line-height: 1.4
+            margin-bottom: 6px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .log-entry.info {
+            color: #3498db;
+        }
+
+        .log-entry.warning {
+            color: #f39c12;
+        }
+
+        .log-entry.error {
+            color: #e74c3c;
+        }
+
+        .log-entry.success {
+            color: #27ae60;
         }
 
         .hidden {
-            display: none
+            display: none;
         }
 
-        .tab-buttons {
-            display: flex;
-            margin-bottom: 16px;
-            border-bottom: 1px solid#eee
+        .channel-table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            background: #fff;
         }
 
-        .tab-btn {
-            padding: 8px 16px;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-size: 14px
+        .channel-table {
+            width: 100%;
+            border-collapse: collapse;
+            /* min-width: 800px; */
+        }
+
+        .channel-table th {
+            background-color: #f8f9fa;
+            padding: 14px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+        }
+
+        .channel-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .channel-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .channel-table tr:hover {
+            background-color: #f9f9f9;
         }
 
         .color-picker {
-            /* 隐藏原生颜色选择器 */
-            width: 20px;
-            height: 20px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            border: none;
+            border: 1px solid rgba(0, 0, 0, 0.1);
             padding: 0;
             overflow: hidden;
             cursor: pointer;
+            transition: var(--transition);
         }
 
-        /* @_@感觉没效果啊 */
+        .color-picker:hover {
+            transform: scale(1.1);
+        }
 
-        .tab-btn.active {
-            border-bottom-color: var(--secondary-color);
+        .btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .btn.primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn.danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .channel-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        .control-group input {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            width: 120px;
+            font-size: 14px;
+        }
+
+        .channel-indicator {
+            padding: 8px 16px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .channel-indicator i {
+            font-weight: 600;
             color: var(--secondary-color);
-            font-weight: 500
         }
 
-        .status-icon {
-            margin: 0 8px
+        .help-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+            margin-left: 4px;
         }
 
-        .connected {
-            color: #00ff00
+        .section-title {
+            margin: 24px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            color: var(--primary-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .disconnected {
-            color: #ff0000
+        .section-title i {
+            color: var(--secondary-color);
+        }
+
+        .material-select {
+            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 13px;
+            min-width: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .control-panel {
+                margin: 16px;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .channel-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .tab-buttons {
+                overflow-x: auto;
+                padding: 0 16px;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-    <div class="status-bar"><!--<span id="connection-status">未连接</span>-->
-        <div><span id="ESP-dot" class="status-icon disconnected">●</span><span id="wifi-status">ESP</span></div>
-        <div><span id="mqtt-dot" class="status-icon disconnected">●</span><span id="mqtt-status">MQTT</span></div>
+    <div class="status-bar">
+        <div class="status-indicator">
+            <span class="status-dot" id="esp-dot"></span>
+            <span id="wifi-status">ESP32</span>
+        </div>
+        <div class="status-indicator">
+            <span class="status-dot" id="mqtt-dot"></span>
+            <span id="mqtt-status">MQTT</span>
+        </div>
     </div>
+
     <div class="control-panel">
+        <div class="panel-header">
+            <h3><i class="fas fa-sliders-h"></i>Top-AMS</h3>
+        </div>
+
         <div class="tab-buttons">
-            <button class="tab-btn active" onclick="showTab('config-panel')">打印机配置</button>
-            <button class="tab-btn" onclick="showTab('main-panel')">主控制</button>
-            <button class="tab-btn" onclick="showTab('channel-panel')">通道管理</button>
+            <button class="tab-btn active" onclick="showTab('config-panel')"><i class="fas fa-wifi"></i> 网络配置</button>
+            <button class="tab-btn" onclick="showTab('main-panel')"><i class="fas fa-tachometer-alt"></i> 主控制台</button>
+            <button class="tab-btn" onclick="showTab('channel-panel')"><i class="fas fa-fill-drip"></i> 通道管理</button>
         </div>
-        <div id="config-panel"><!--<h3>网络配置</h3>-->
-            <div class="input-group">
-                <label>打印机ip地址</label><input type="text" id="bambu-ip" placeholder="192.168.1.1">
+
+        <!-- 网络配置面板 -->
+        <div id="config-panel" class="panel-content">
+            <div class="section-title"><i class="fas fa-print"></i> 打印机连接设置</div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="bambu-ip">打印机 IP 地址</label>
+                    <input type="text" id="bambu-ip" placeholder="192.168.1.1">
+                    <div class="help-text">在打印机设置-网络里可以查看</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="device-serial">设备序列号</label>
+                    <input type="text" id="device-serial" placeholder="">
+                    <div class="help-text">在打印机设置里可以查看</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="mqtt-pass">MQTT 密码</label>
+                    <input type="text" id="mqtt-pass" placeholder="">
+                    <div class="help-text">打印机设置局域网模式里的密码,不需要开启局域网模式</div>
+                </div>
             </div>
-            <div class="input-group">
-                <label>MQTT密码</label><input type="text" id="mqtt-pass" placeholder="输入MQTT密码">
-            </div>
-            <div class="input-group">
-                <label>设备序列号</label><input type="text" id="device-serial"
-                    placeholder="XXXXXXXXXXXXXXX"><!--可以加一个如何查看设备序列号的说明@_@-->
-            </div>
-            <div class="action-buttons"><button class="action-btn" onclick="sendMQTT()">连接打印机</button>
-                <!--<button class="action-btn"onclick="showTab('main-panel')">取消</button>-->
-                <!-- <button class="action-btn" onclick="testfun()">取消</button> -->
-            </div>
-        </div>
-        <div id="main-panel" class="hidden">
-            <div class="log-panel">
-                <h3>运行日志</h3>
-                <div class="log-content" id="log-content"></div>
+
+            <div class="action-buttons">
+                <button class="action-btn success" onclick="sendMQTT()">
+                    <i class="fas fa-plug"></i> 连接打印机
+                </button>
+                <button class="action-btn" onclick="showTab('channel-panel')">
+                    <i class="fas fa-arrow-right"></i> 跳过配置
+                </button>
             </div>
         </div>
 
-        <div id="channel-panel" class="hidden">
-            <div class="feed-time-group">
-                <div class="feed-time">
-                    <label for="feed-in-time-input">进料时间(毫秒): </label>
+        <!-- 主控制面板 -->
+        <div id="main-panel" class="panel-content hidden">
+            <div class="log-panel">
+                <div class="log-header">
+                    <h4><i class="fas fa-terminal"></i> 系统运行日志</h4>
+                </div>
+                <div class="log-content" id="log-content">
+                    <!-- <div class="log-entry info">[INFO] 系统初始化完成，等待连接...</div>
+                    <div class="log-entry">[DEBUG] WebSocket 连接已建立</div>
+                    <div class="log-entry warning">[WARNING] MQTT 连接尚未配置</div> -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 通道管理面板 -->
+        <div id="channel-panel" class="panel-content hidden">
+            <div class="channel-controls">
+                <div class="control-group">
+                    <label for="load_time">进料时间 (ms):</label>
                     <input type="number" id="load_time" value="5000" min="1000"
                         onchange="sendKeyValue('load_time', this.value)">
-                    <span id="load-time-status" class="status-icon"></span>
                 </div>
-                <div class="feed-time">
-                    <label for="feed-out-time-input">退料时间(毫秒): </label>
+
+                <div class="control-group">
+                    <label for="uload_time">退料时间 (ms):</label>
                     <input type="number" id="uload_time" value="5000" min="1000"
                         onchange="sendKeyValue('uload_time', this.value)">
-                    <span id="uload-time-status" class="status-icon"></span>
                 </div>
-                <div id="current-channel-tip">当前通道: <i id="this-channel"></i></div>
+
+                <div class="channel-indicator">
+                    <i class="fas fa-info-circle"></i>
+                    <span>当前通道: <b id="this-channel">未选择</b></span>
+                </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>通道</th>
-                        <th>颜色</th>
-                        <th>材料名字</th>
-                        <th>续料通道</th>
-                        <th>电机控制</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td> 通道1 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PLTG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',1)">正转</button>
-                            <button onclick="sendCommand('motor_backward',1)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> 通道2 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',2)">正转</button>
-                            <button onclick="sendCommand('motor_backward',2)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> 通道3 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',3)">正转</button>
-                            <button onclick="sendCommand('motor_backward',3)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> 通道4 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',4)">正转</button>
-                            <button onclick="sendCommand('motor_backward',4)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> 通道5 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',5)">正转</button>
-                            <button onclick="sendCommand('motor_backward',5)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> 通道6 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',6)">正转</button>
-                            <button onclick="sendCommand('motor_backward',6)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td> 通道7 </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',7)">正转</button>
-                            <button onclick="sendCommand('motor_backward',7)">反转</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            通道8
-                        </td>
-                        <td>
-                            <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
-                        </td>
-                        <td>PETG</td>
-                        <td>
-                            <select class="material-channel-select">
-                                <option value="1">通道1</option>
-                                <option value="2">通道2</option>
-                                <option value="3">通道3</option>
-                                <option value="4">通道4</option>
-                                <option value="5">通道5</option>
-                                <option value="6">通道6</option>
-                                <option value="7">通道7</option>
-                                <option value="8">通道8</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button onclick="sendCommand('motor_forward',8)">正转</button>
-                            <button onclick="sendCommand('motor_backward',8)">反转</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="section-title"><i class="fas fa-list"></i> 通道配置</div>
 
+            <div class="channel-table-container">
+                <table class="channel-table">
+                    <thead class="channel-table-thead">
+                        <tr>
+                            <th>通道</th>
+                            <th>颜色</th>
+                            <th>材料名称</th>
+                            <th>续料通道</th>
+                            <th>电机控制</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="通道">通道 1</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#3498db"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">PLA</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',1)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',1)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',1)">上料</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 2</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#e74c3c"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">PETG</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',2)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',2)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',2)">上料</button>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 3</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#2ecc71"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">ABS</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',3)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',3)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',3)">上料</button>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 4</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#f1c40f"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">TPU</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',4)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',4)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',4)">上料</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 5</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#9b59b6"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">PLA</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',5)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',5)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',5)">上料</button>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 6</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#1abc9c"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">PETG</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',6)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',6)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',6)">上料</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 7</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#e67e22"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">ABS</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',7)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',7)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',7)">上料</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td data-label="通道">通道 8</td>
+                            <td data-label="颜色"><input type="color" class="color-picker" value="#34495e"
+                                    onchange="updateColorIndicator(this)"></td>
+                            <td data-label="材料名称">TPU</td>
+                            <td data-label="续料通道">
+                                <select class="material-select">
+                                    <option value="1">通道 1</option>
+                                    <option value="2">通道 2</option>
+                                    <option value="3">通道 3</option>
+                                    <option value="4">通道 4</option>
+                                    <option value="5">通道 5</option>
+                                    <option value="6">通道 6</option>
+                                    <option value="7">通道 7</option>
+                                    <option value="8">通道 8</option>
+                                </select>
+                            </td>
+                            <td data-label="电机控制" class="btn-group">
+                                <button class="btn primary" onclick="sendCommand('motor_forward',8)">进料</button>
+                                <button class="btn warning" onclick="sendCommand('motor_backward',8)">退料</button>
+                                <button class="btn success" onclick="sendCommand('load_filament',8)">上料</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+        <style>
+            @media (max-width: 768px) {
+                .channel-table-container {
+                    border: none;
+                    padding: 0;
+                }
 
+                .channel-table,
+                .channel-table thead,
+                .channel-table tbody,
+                .channel-table tr,
+                .channel-table th,
+                .channel-table td {
+                    display: block;
+                    width: 100%;
+                }
+
+                .channel-table thead {
+                    display: none;
+                }
+
+                .channel-table tr {
+                    margin-bottom: 18px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                    background: #fff;
+                    border: 1px solid #eee;
+                    padding: 10px 0;
+                }
+
+                .channel-table td {
+                    padding: 10px 16px;
+                    text-align: left;
+                    border: none;
+                    position: relative;
+                }
+
+                .channel-table td[data-label]:before {
+                    content: attr(data-label) "：";
+                    font-weight: 600;
+                    color: #7f8c8d;
+                    display: inline-block;
+                    width: 90px;
+                    min-width: 90px;
+                    margin-right: 8px;
+                }
+
+                .btn-group {
+                    gap: 8px;
+                    margin-top: 8px;
+                }
+            }
+        </style>
     </div>
 
     <script>
         const ws = new WebSocket('ws://' + window.location.hostname + '/ws');
-        const ESP_dot = document.getElementById('ESP-dot');
-        const mqtt_dot = document.getElementById('mqtt-dot');
+        const espDot = document.getElementById('esp-dot');
+        const mqttDot = document.getElementById('mqtt-dot');
         let currentChannels = [];
 
         ws.onopen = function () {
-            ESP_dot.classList.replace('disconnected', 'connected')
+            espDot.classList.add('connected');
+            espDot.classList.remove('disconnected');
+            addLog('WebSocket连接已建立', 'success');
         };
+
         ws.onclose = function () {
-            ESP_dot.classList.replace('connected', 'disconnected')
+            espDot.classList.add('disconnected');
+            espDot.classList.remove('connected');
+            addLog('WebSocket连接已关闭', 'warning');
         };
 
         ws.onmessage = function (event) {
@@ -552,9 +844,13 @@
                     switch (item.name) {
                         case 'MQTT_done':
                             if (item.value) {
-                                mqtt_dot.classList.replace('disconnected', 'connected');
+                                mqttDot.classList.add('connected');
+                                mqttDot.classList.remove('disconnected');
+                                addLog('MQTT连接成功', 'success');
                             } else {
-                                mqtt_dot.classList.replace('connected', 'disconnected');
+                                mqttDot.classList.add('disconnected');
+                                mqttDot.classList.remove('connected');
+                                addLog('MQTT连接失败', 'error');
                             }
                             break;
                         case 'MQTT_pass':
@@ -572,18 +868,21 @@
                         case 'uload_time':
                             document.getElementById('uload_time').value = item.value;
                             break;
-                        case "extruder":// 处理通道信息
+                        // 处理通道信息
+                        case "extruder":
                             document.getElementById('this-channel').textContent = item.value;
                             break;
                     }
                 });
             }
             if (doc.log) {
-                addLog(doc.log);
+                addLog(doc.log, 'info');
             }
         };
 
-        ws.onerror = function (error) { };
+        ws.onerror = function (error) {
+            addLog('WebSocket错误: ' + error.message, 'error');
+        };
 
         function showTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => { btn.classList.remove('active') });
@@ -591,7 +890,7 @@
             document.getElementById('main-panel').classList.add('hidden');
             document.getElementById('config-panel').classList.add('hidden');
             document.getElementById('channel-panel').classList.add('hidden');
-            document.getElementById(tabId).classList.remove('hidden')
+            document.getElementById(tabId).classList.remove('hidden');
         }
 
         // 发送MQTT参数
@@ -613,10 +912,9 @@
                 ]
             };
             ws.send(JSON.stringify(doc));
-            showTab('main-panel')
+            showTab('main-panel');
+            addLog('正在连接打印机...', 'info');
         }
-
-
 
         // @brief 发送命令
         // @param command 命令名称
@@ -629,6 +927,7 @@
                 }
             };
             ws.send(JSON.stringify(doc));
+            addLog(`发送命令: ${_command} (value: ${_value})`, 'info');
         }
 
         //发送键值对
@@ -642,19 +941,44 @@
                 ]
             };
             ws.send(JSON.stringify(doc));
+            addLog(`更新参数: ${_key} = ${_value}`, 'info');
         }
 
-        function addLog(message) {
+        function addLog(message, type = 'info') {
             const logElement = document.getElementById('log-content');
             const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            logEntry.textContent = message;
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${getTimestamp()}] ${message}`;
             logElement.appendChild(logEntry);
-            logElement.scrollTop = logElement.scrollHeight
+            logElement.scrollTop = logElement.scrollHeight;
         }
 
+        function getTimestamp() {
+            const now = new Date();
+            return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        }
 
+        // function updateColorIndicator(element) {
+        //     // 视觉反馈
+        //     element.parentElement.animate([
+        //         { transform: 'scale(1)', backgroundColor: 'transparent' },
+        //         { transform: 'scale(1.1)', backgroundColor: 'rgba(52, 152, 219, 0.2)' },
+        //         { transform: 'scale(1)', backgroundColor: 'transparent' }
+        //     ], {
+        //         duration: 300,
+        //         iterations: 1
+        //     });
 
+        //     // 在实际应用中，这里可以发送颜色更新命令
+        //     // sendKeyValue('color_channel_X', element.value);
+        // }
+
+        // 初始化状态指示器
+        document.addEventListener('DOMContentLoaded', function () {
+            espDot.classList.add('disconnected');
+            mqttDot.classList.add('disconnected');
+            addLog('AMS控制台已加载', 'success');
+        });
     </script>
 </body>
 
