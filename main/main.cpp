@@ -465,7 +465,7 @@ extern "C" void app_main() {
             webfpr(ws, "MQTT连接中...");
             Mqtt.wait();
             if (Mqtt.connected()) {
-                fpr("MQTT连接成功");
+                webfpr("MQTT连接成功");
                 MQTT_done = true;
                 work(Mqtt);
             } else {
@@ -483,7 +483,7 @@ extern "C" void app_main() {
             webfpr(ws, "MQTT连接中...");
             Mqtt.wait();
             if (Mqtt.connected()) {
-                fpr("MQTT连接成功");
+                webfpr("MQTT连接成功");
                 MQTT_done = true;
                 work(Mqtt);
             } else {
