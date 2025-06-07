@@ -288,11 +288,11 @@ volatile bool running_flag{false};
 
 extern "C" void app_main() {
 
-    for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
-        auto& x = config::motors[i];
-        esp::gpio_out(x.forward, false);
-        esp::gpio_out(x.backward, false);
-    }//初始化电机GPIO
+    // for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
+    //     auto& x = config::motors[i];
+    //     esp::gpio_out(x.forward, false);
+    //     esp::gpio_out(x.backward, false);
+    // }//初始化电机GPIO
 
 
 
@@ -316,6 +316,7 @@ extern "C" void app_main() {
             running_flag = false;
         }
     });
+    //@_@直接一个thread大概要4kb,像这种轻量的可以用rtos的优化一下
 
 
 
