@@ -265,11 +265,11 @@ volatile bool running_flag{false};
 
 extern "C" void app_main() {
 
-    // for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
-    //     auto& x = config::motors[i];
-    //     esp::gpio_out(x.forward, false);
-    //     esp::gpio_out(x.backward, false);
-    // }//初始化电机GPIO
+    for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
+        auto& x = config::motors[i];
+        esp::gpio_out(x.forward, false);
+        esp::gpio_out(x.backward, false);
+    }//初始化电机GPIO
 
 
 
@@ -288,7 +288,7 @@ extern "C" void app_main() {
                 mstd::delay(200ms);
                 continue;
             }
-            fpr("微动触发");
+            webfpr("微动触发");
             motor_run(extruder, true, 1s);
             running_flag = false;
         }
@@ -376,10 +376,7 @@ extern "C" void app_main() {
                 deserializeJson(doc, data);
                 fpr("ws收到的json\n", doc, "\n");
 
-                // 遍历 data 字段下的所有 jsonobj
-                // if (doc["data"].is<JsonArray>()) {
-                //     for (JsonObject obj : doc["data"].as<JsonArray>()) {
-                //         if (obj["name"].is<const char*>()) {
+
                 if (doc.containsKey("data") && doc["data"].is<JsonArray>()) {
                     for (JsonObject obj : doc["data"].as<JsonArray>()) {
                         if (obj.containsKey("name")) {
@@ -397,21 +394,24 @@ extern "C" void app_main() {
                 }//if
 
 
-                if (doc["action"]["command"].as<string>() != "") {
-                    std::string command = doc["action"]["command"].as<string>();
-                    int motor_id = doc["action"]["motor_id"] | -1;
-                    if (command == "motor_forward") {
+                std::string command = doc["action"]["command"] | string("_null");
+                if (command != "_null") {//处理命令json
+                    if (command == "motor_forward") {//电机前向控制
+                        int motor_id = doc["action"]["value"] | -1;
                         async_channel.emplace(
                             [motor_id]() {
                                 motor_run(motor_id, true);
                             });
-                    } else if (command == "motor_backward") {
+                    } else if (command == "motor_backward") {//电机前向控制
+                        int motor_id = doc["action"]["value"] | -1;
                         async_channel.emplace(
                             [motor_id]() {
                                 motor_run(motor_id, false);
                             });
+                    } else {
+                        fpr("未知命令:", command);
                     }
-                }//电机控制
+                }
 
             }//WS_EVT_DATA
         });

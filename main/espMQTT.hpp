@@ -154,6 +154,6 @@ namespace mesp {
     };// Mqttclinet
 
 
-
+    //mqtt连接错误这边,应该是外部给一个错误处理的回调,然后在这个回调里改变mqtt_done@_@
 
 }// mesp

@@ -325,7 +325,6 @@
                         onchange="sendKeyValue('uload_time', this.value)">
                     <span id="uload-time-status" class="status-icon"></span>
                 </div>
-                <!-- 添加当前使用中的通道提示 -->
                 <div id="current-channel-tip">当前通道: <i id="this-channel"></i></div>
             </div>
 
@@ -346,7 +345,6 @@
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PLTG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -360,19 +358,16 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(1,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(1,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',1)">正转</button>
+                            <button onclick="sendCommand('motor_backward',1)">反转</button>
                         </td>
                     </tr>
-                    <!-- 重复其他通道行 -->
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td> 通道2 </td>
                         <td>
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -386,18 +381,16 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(2,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(2,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',2)">正转</button>
+                            <button onclick="sendCommand('motor_backward',2)">反转</button>
                         </td>
                     </tr>
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td> 通道3 </td>
                         <td>
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -411,18 +404,16 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(3,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(3,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',3)">正转</button>
+                            <button onclick="sendCommand('motor_backward',3)">反转</button>
                         </td>
                     </tr>
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td> 通道4 </td>
                         <td>
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -436,18 +427,16 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(4,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(4,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',4)">正转</button>
+                            <button onclick="sendCommand('motor_backward',4)">反转</button>
                         </td>
                     </tr>
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td> 通道5 </td>
                         <td>
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -461,18 +450,16 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(5,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(5,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',5)">正转</button>
+                            <button onclick="sendCommand('motor_backward',5)">反转</button>
                         </td>
                     </tr>
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td> 通道6 </td>
                         <td>
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -486,18 +473,16 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(6,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(6,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',6)">正转</button>
+                            <button onclick="sendCommand('motor_backward',6)">反转</button>
                         </td>
                     </tr>
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td> 通道7 </td>
                         <td>
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -511,12 +496,11 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(7,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(7,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',7)">正转</button>
+                            <button onclick="sendCommand('motor_backward',7)">反转</button>
                         </td>
                     </tr>
                     <tr>
-                        <!-- 修改为普通文本框 -->
                         <td>
                             通道8
                         </td>
@@ -524,7 +508,6 @@
                             <input type="color" class="color-picker" onchange="updateColorIndicator(this)">
                         </td>
                         <td>PETG</td>
-                        <!-- 修改为下拉框 -->
                         <td>
                             <select class="material-channel-select">
                                 <option value="1">通道1</option>
@@ -538,21 +521,13 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="sendMotor(8,'motor_forward')">正转</button>
-                            <button onclick="sendMotor(8,'motor_backward')">反转</button>
+                            <button onclick="sendCommand('motor_forward',8)">正转</button>
+                            <button onclick="sendCommand('motor_backward',8)">反转</button>
                         </td>
                     </tr>
                 </tbody>
             </table>
 
-            <!-- <div class="func-buttons">
-                        <button onclick="sendJson('收回材料')">收回材料</button>
-                        <button onclick="sendJson('切换通道 (当前:6)')">切换通道 (当前:6)</button>
-                        <button onclick="sendJson('卸载耗材')">卸载耗材</button>
-                        <button class="config-btn" onclick="sendJson('AMS配置')">AMS配置</button>
-                        <button onclick="sendJson('多设备切换')">多设备切换</button>
-                        <button onclick="sendJson('操作说明')">操作说明</button>
-                    </div> -->
         </div>
 
     </div>
@@ -591,13 +566,13 @@
                         case 'device_serial':
                             document.getElementById('device-serial').value = item.value;
                             break;
-                        case 'load_time':  // 新增进料时间处理
+                        case 'load_time':
                             document.getElementById('load_time').value = item.value;
                             break;
-                        case 'uload_time': // 新增退料时间处理
+                        case 'uload_time':
                             document.getElementById('uload_time').value = item.value;
                             break;
-                        case "extruder":
+                        case "extruder":// 处理通道信息
                             document.getElementById('this-channel').textContent = item.value;
                             break;
                     }
@@ -640,12 +615,17 @@
             ws.send(JSON.stringify(doc));
             showTab('main-panel')
         }
-        //发送电机控制参数
-        function sendMotor(_motor_id, _atcive) {
+
+
+
+        // @brief 发送命令
+        // @param command 命令名称
+        // @param value 命令值
+        function sendCommand(_command, _value) {
             const doc = {
                 action: {
-                    command: _atcive,
-                    motor_id: _motor_id
+                    command: _command,
+                    value: _value
                 }
             };
             ws.send(JSON.stringify(doc));
