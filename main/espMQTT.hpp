@@ -88,21 +88,27 @@ namespace mesp {
 
         std::atomic<int> state = mqtt_state::init;
 
-        Mqttclient(const string& server, const string& user, const string& pass, callback_fun_ptr f)
-            : event_data_fun(f) {
-            esp_mqtt_client_config_t mqtt_cfg{};
-            mqtt_cfg.broker.address.uri = server.c_str();
-            // mqtt_cfg.broker.verification.use_global_ca_store = false;
-            mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
-            mqtt_cfg.credentials.username = user.c_str();
-            mqtt_cfg.credentials.authentication.password = pass.c_str();
-            // mqtt_cfg.network.disable_auto_reconnect = true;//自动重连
+  Mqttclient(const string& server, const string& user, const string& pass, callback_fun_ptr f)
+    : event_data_fun(f) 
+{
+    esp_mqtt_client_config_t mqtt_cfg{};
+    mqtt_cfg.broker.address.uri = server.c_str();
+    mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
+    mqtt_cfg.credentials.username = user.c_str();
+    mqtt_cfg.credentials.authentication.password = pass.c_str();
 
-            client = esp_mqtt_client_init(&mqtt_cfg);
+  
+    // 关键优化配置
+    mqtt_cfg.buffer.size = 4096;                  // 增大接收缓冲区
+    mqtt_cfg.buffer.out_size = 2048;              // 发送缓冲区
+    mqtt_cfg.network.reconnect_timeout_ms = 5000; // 5秒重连
+    mqtt_cfg.task.stack_size = 6144;              // 增大任务栈
+    mqtt_cfg.task.priority = 5;                   // 提高任务优先级
 
-            error_check(esp_mqtt_client_register_event(client, MQTT_EVENT_ANY, Mqttclient::mqtt_event_callback, this), "Mqtt注册事件失败");
-            error_check(esp_mqtt_client_start(client), "Mqtt初始化失败");
-        }
+    client = esp_mqtt_client_init(&mqtt_cfg);
+    error_check(esp_mqtt_client_register_event(client, MQTT_EVENT_ANY, Mqttclient::mqtt_event_callback, this), "Mqtt注册事件失败");
+    error_check(esp_mqtt_client_start(client), "Mqtt初始化失败");
+}
         ~Mqttclient() {
             if (state != mqtt_state::init)
                 error_check(esp_mqtt_client_stop(client));
