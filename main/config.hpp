@@ -32,6 +32,7 @@ namespace config {
     inline mesp::wsStoreValue<int> uload_time("uload_time", 5000);// 退料运转时间
 
     inline const auto forward_click = GPIO_NUM_7;// 进料微动,缓存机构预留
+    //@_@6通用的4,之后记得改
     // inline const auto back_click = GPIO_NUM_NC;   // 退料微动
 
     inline gpio_num_t LED_R = GPIO_NUM_12;

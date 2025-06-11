@@ -20,8 +20,8 @@
 
 
 using std::string;
-//新添加的变量
 
+//新添加的变量
 TaskHandle_t Task1_handle;//微动任务
 
 
@@ -52,27 +52,6 @@ AsyncWebSocket& ws = mesp::ws_server;//先直接用全局的ws_server
 inline mstd::channel_lock<std::function<void()>> async_channel;//异步任务通道
 
 inline string last_ws_log = "日志初始化";//可能会有多个webfpr,非线程安全注意,现在单核先不管
-
-void Task1(void* param){
-	esp::gpio_set_in(GPIO_NUM_4);
-
-    while(true) {
-		int level = gpio_get_level(GPIO_NUM_4);//设定4号口为缓冲驱动
-        
-
-		if (level == 0){
-			int now_extruder = extruder;
-			 webfpr("微动触发");
-			esp::gpio_out(config::motors[now_extruder - 1].forward,true);
-		    vTaskDelay(1000/portTICK_PERIOD_MS);//微动进料的时间可以自己改
-		    esp::gpio_out(config::motors[now_extruder - 1].forward,false);
-		
-
-		}
-	
-			
-		vTaskDelay(20/portTICK_PERIOD_MS);//延时1000ms=1s,使系统执行其他任务删了就寄了
-	}}//微动缓冲程序
 
 
 //@brief WebSocket消息打印
@@ -149,7 +128,8 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
         fpr("发送成功,消息id=", msg_id);
     // fpr(TAG, "binary sent with msg_id=%d", msg_id);
     esp::gpio_out(config::LED_L, false);
-    mstd::delay(2s);//@_@这些延时还可以调整看看
+    // mstd::delay(2s);//@_@这些延时还可以调
+    //我觉得延时还是加在程序里好调试
 }
 
 
@@ -221,11 +201,13 @@ void change_filament(esp_mqtt_client_handle_t client, int old_extruder) {
 esp_mqtt_client_handle_t __client;
 
 //上料
-void load_filament(int extruder) {
+void load_filament(int new_extruder) {
     // __client;//先用这个,之后解耦出来
 
+    extruder = new_extruder;//换料完成
 
-    ws_extruder = std::to_string(extruder);// 更新前端显示的耗材编号
+
+    ws_extruder = std::to_string(new_extruder);// 更新前端显示的耗材编号
 }
 
 
@@ -260,10 +242,12 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     // fpr("nozzle_target_temper:",nozzle_target_temper);
 
     // return;
+
+
     if (bed_target_temper > 0 && bed_target_temper < 17) {// 读到的温度是通道
         if (gcode_state == "PAUSE") {
             // mstd::delay(4s);//确保暂停动作(3.5s)完成
-            mstd::delay(4500ms);// 貌似4s还是有可能会有bug
+            // mstd::delay(4500ms);// 貌似4s还是有可能会有bug,貌似bug本质是以前发gcode忘了\n,现在应该不用延时
             if (bed_target_temper_max > 0) {// 似乎热床置零会导致热端固定到90
                 publish(client, bambu::msg::runGcode(
                                     std::string("M190 S") + std::to_string(bed_target_temper_max)// 恢复原来的热床温度
@@ -280,6 +264,8 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
                 });
             } else if (!pause_lock.load()) {// 可能会收到旧消息
                 fpr("同一耗材,无需换料");
+                publish(client, bambu::msg::runGcode(std::string("M190 S") + std::to_string(bed_target_temper_max)));//恢复原来的热床温度
+                mstd::delay(1000ms);//确保暂停动作完成
                 publish(client, bambu::msg::print_resume);// 无须换料
             }
             if (bed_target_temper_max > 0)
@@ -310,11 +296,29 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
 
 }// callback
 
+void Task1(void* param) {
+    esp::gpio_set_in(config::forward_click);
+
+    while (true) {
+        int level = gpio_get_level(config::forward_click);
+
+        if (level == 0) {
+            webfpr("微动触发");
+            motor_run(extruder.load(), true, 1s);// 进线
+        }
+
+
+        vTaskDelay(20 / portTICK_PERIOD_MS);//延时1000ms=1s,使系统执行其他任务删了就寄了
+    }
+}//微动缓冲程序
+
+
 #include "index.hpp"
 
 volatile bool running_flag{false};
 
 extern "C" void app_main() {
+
 
     // for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
     //     auto& x = config::motors[i];
@@ -322,33 +326,9 @@ extern "C" void app_main() {
     //     esp::gpio_out(x.backward, false);
     // }//初始化电机GPIO
 
-   xTaskCreate(Task1,"Task1",2048,NULL,1,&Task1_handle);//微动任务
 
-    /*
-    //微动任务
-    std::thread task([]() {
-        pinMode(config::forward_click, INPUT_PULLUP);
-        attachInterrupt(
-            digitalPinToInterrupt(config::forward_click),
-            []() {
-                running_flag = true;
-            },
-            FALLING);
+    xTaskCreate(Task1, "Task1", 2048, NULL, 1, &Task1_handle);//微动任务
 
-        while (true) {
-            if (!running_flag) {
-                mstd::delay(200ms);
-                continue;
-            }
-            webfpr("微动触发");
-            motor_run(extruder, true, 1s);
-            running_flag = false;
-        }
-    });
-    //@_@直接一个thread大概要4kb,像这种轻量的可以用rtos的优化一下
-
-
-    */
 
     {// wifi连接部分
         mesp::ConfigStore wificonfig("wificonfig");
