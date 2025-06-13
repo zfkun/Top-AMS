@@ -129,7 +129,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
 
 
 //换料
-void change_filament(esp_mqtt_client_handle_t client, int new_extruder) {
+void change_filament(esp_mqtt_client_handle_t client, int old_extruder) {
 
     auto fpr = [](const string& r) { webfpr(ws, r); };//重设一下fpr
 
@@ -137,7 +137,7 @@ void change_filament(esp_mqtt_client_handle_t client, int new_extruder) {
     // esp::gpio_out(config::LED_R, false);
 
     //换料假定一定有旧料
-    int old_extruder = extruder;
+    int new_extruder = extruder;
     ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(new_extruder);
 
     publish(client, bambu::msg::runGcode("M211 S \nM211 X1 Y1 Z1\nM1002 push_ref_mode\nG91 \nG1 Z-1.0 F900\nM1002 pop_ref_mode\nM211 R\n"));//防止Z轴抬高
@@ -244,11 +244,12 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
                                     ));
             }
 
-            if (extruder != bed_target_temper) {
+            int old_extruder = extruder.exchange(bed_target_temper);
+            if (old_extruder != bed_target_temper) {//旧通道不等于新通道
                 fpr("唤醒换料程序");
                 pause_lock = true;
                 async_channel.emplace([&]() {
-                    change_filament(client, bed_target_temper);
+                    change_filament(client, old_extruder);
                 });
             } else if (!pause_lock.load()) {// 可能会收到旧消息
                 fpr("同一耗材,无需换料");
