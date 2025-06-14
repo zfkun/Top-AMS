@@ -432,8 +432,12 @@ volatile bool running_flag{false};
 
 extern "C" void app_main() {
 
+    // for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
+    //     auto& x = config::motors[i];
+    //     esp::gpio_out(x.forward, false);
+    //     esp::gpio_out(x.backward, false);
+    // }//初始化电机GPIO
 
-    //espstart();//始化电机
 
     xTaskCreate(Task1, "Task1", 2048, NULL, 1, &Task1_handle);//微动任务
 
