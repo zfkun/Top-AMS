@@ -252,7 +252,7 @@ esp_mqtt_client_handle_t __client;
 //上料
 void load_filament(int new_extruder) {
     // __client;//先用这个,之后解耦出来
-    fpr("开始上料");
+    webfpr("开始上料");
     publish(__client, bambu::msg::get_status);
     fpr("ok");
     vTaskDelay(3000 / portTICK_PERIOD_MS);
@@ -314,8 +314,6 @@ void load_filament(int new_extruder) {
             publish(__client, bambu::msg::runGcode(std::string("M109 S200")));
         }
     }
-
-
 
     else if (hw_switch == 1) {
         int old_extruder = extruder;
@@ -420,7 +418,7 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     std::string gcode_state = doc["print"]["gcode_state"] | "unkonw";
     hw_switch = doc["print"]["hw_switch_state"] | hw_switch;
 
-    webfpr("hw_switch" + std::to_string(hw_switch));//小绿点状态
+    fpr("hw_switch:" + std::to_string(hw_switch));//小绿点状态
 
 
 
@@ -477,18 +475,16 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
 }// callback
 
 void Task1(void* param) {
-    esp::gpio_set_in(GPIO_NUM_4);
+    esp::gpio_set_in(config::forward_click);
 
     while (true) {
-        int level = gpio_get_level(GPIO_NUM_4);//设定4号口为缓冲驱动
-
+        int level = gpio_get_level(config::forward_click);
 
         if (level == 0) {
             int new_extruder = extruder;
             webfpr("微动触发");
             motor_run(new_extruder, true, 1s);// 进线
         }
-
 
         vTaskDelay(20 / portTICK_PERIOD_MS);//延时1000ms=1s,使系统执行其他任务删了就寄了
     }

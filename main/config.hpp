@@ -7,7 +7,8 @@
 
 
 #include "web_sync.hpp"
-#define MOTORS_6// 使用当前配置（6通道）注释掉就是8通道
+// #define MOTORS_6// 使用当前配置（6通道）注释掉就是8通道
+
 namespace config {
 
     // using string = String;
