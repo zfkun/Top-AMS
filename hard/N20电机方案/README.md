@@ -20,6 +20,10 @@ https://item.taobao.com/item.htm?_u=u20d07goa52706&id=525167243889&spm=a1z09.2.0
 <!--
   https://detail.tmall.com/item.htm?_u=u20d07goa50850&id=680516964370&skuId=4882059537313&spm=a1z09.2.0.0.2c792e8dpwNFHc
 -->
+- M3螺丝
+
+## 打印说明
+- 个别零件太松太紧的,可以单独调节孔径补偿
 
 ## 代办
 - 支架设计,现在是双面胶
