@@ -50,8 +50,8 @@ if __name__ == "__main__":
     parser.add_argument('--header', 
                         default=
                         '#pragma once\n'
-                        '#include <string>\n\n' 
-                        'inline const std::string web = R"rawliteral(',
+                        '#include <string_view>\n\n' 
+                        'constexpr std::string_view web = R"rawliteral(',
                           help='头部自定义字符串')
     
     parser.add_argument('--footer', default=
