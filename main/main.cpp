@@ -35,6 +35,7 @@ int sequence_id = -1;
 // std::atomic<int> print_error = 0;
 std::atomic<int> ams_status = -1;
 std::atomic<bool> pause_lock{false};// 暂停锁
+std::atomic<int> nozzle_target_temper = -1;
 
 //std::atomic<int> hw_switch{0};//小绿点, 其实是布尔
 
@@ -109,7 +110,7 @@ inline void motor_run(int motor_id, bool fwd, T&& t) {
 // @param fwd 标识方向，true 表示前向，false 表示后向
 inline void motor_run(int motor_id, bool fwd) {
     motor_run(motor_id, fwd,
-              fwd ? config::load_time.get_value() : config::uload_time);
+              fwd ? config::load_time.get_value() : config::uload_time.get_value());
 }//motor_run
 
 
@@ -129,7 +130,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
         fpr("发送成功,消息id=", msg_id);
     // fpr(TAG, "binary sent with msg_id=%d", msg_id);
     esp::gpio_out(config::LED_L, false);
-    // mstd::delay(2s);//@_@这些延时还可以调
+    mstd::delay(2s);//@_@这些延时还可以调
     //我觉得延时还是加在程序里好调试
 }
 
@@ -159,15 +160,21 @@ void change_filament(esp_mqtt_client_handle_t client, int old_extruder) {
         motor_run(old_extruder, false);// 退线
 
         mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
-        extruder = new_extruder;//换料完成
-        ws_extruder = std::to_string(new_extruder);// 更新前端显示的耗材编号
 
-        publish(client, bambu::msg::runGcode("M109 S250\nG1 E150 F500\n"));//旋转热端齿轮辅助进料
-        mstd::delay(5s);//先5s,时间可能取决于热端到250的速度,一个想法是把拉高热端提前能省点时间,但是比较难控制
+        publish(client, bambu::msg::runGcode("M109 S250\n"));
+        while (nozzle_target_temper.load() < 245) {
+            mstd::delay(500ms);// 等待热端温度达到250
+        }
+        // mstd::delay(5s);//先5s,时间可能取决于热端到250的速度,一个想法是把拉高热端提前能省点时间,但是比较难控制
+        //@_@也可以读热端温度,不过如果读==250的话,肯定是挤出机先转,或者可以考虑条件为>240之类
 
         fpr("进线");
-
+        publish(client, bambu::msg::runGcode("G1 E150 F500\n"));//旋转热端齿轮辅助进料
+        mstd::delay(3s);//还是需要延迟,命令落实没这么快
         motor_run(new_extruder, true);// 进线
+
+        extruder = new_extruder;//换料完成
+        ws_extruder = std::to_string(new_extruder);// 更新前端显示的耗材编号
 
         // {//旧的使用进线程序的进料过程
         // 	publish(client,bambu::msg::load);
@@ -251,28 +258,54 @@ esp_mqtt_client_handle_t __client;
 
 //上料
 void load_filament(int new_extruder) {
-    // __client;//先用这个,之后解耦出来
+    // __client;//先用这个,之后解耦出来,应该穿参进来,改好clien的生存期和错误回报就行
+
     if (!(new_extruder > 0 && new_extruder <= config::motors.size())) {
         webfpr("不支持的上料通道");
         return;
     }
-    webfpr("上料还没验证完毕,请先手动上料");
-    return;
+    // webfpr("上料还没验证完毕,请先手动上料");
+    // return;
+
     {//新写的N20上料
         publish(__client, bambu::msg::get_status);//查询小绿点
         mstd::delay(5s);//等待查询结果
         if (hw_switch == 1) {//有料需要退料
-            if (extruder == new_extruder) {
+            int old_extruder = extruder;
+            if (old_extruder == new_extruder) {
                 webfpr("当前通道已经是" + std::to_string(new_extruder) + "无需上料");
                 return;
             }
+            ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(new_extruder);
+            publish(__client, bambu::msg::uload);
+            fpr("发送了退料命令,等待退料完成");
+            mstd::atomic_wait_un(ams_status, 退料完成需要退线);
+            fpr("退料完成,需要退线,等待退线完");
 
-        } else {
-            //直接进料
-            //应该要重复进料到小绿点出现
+            motor_run(old_extruder, false);// 退线
+
+            mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
+        }
+        {//进料
+            publish(__client, bambu::msg::runGcode("M109 S250\n"));
+            while (nozzle_target_temper.load() < 245) {
+                mstd::delay(500ms);// 等待热端温度达到250
+            }
+            // mstd::delay(5s);//先5s,时间可能取决于热端到250的速度,一个想法是把拉高热端提前能省点时间,但是比较难控制
+            //@_@也可以读热端温度,不过如果读==250的话,肯定是挤出机先转,或者可以考虑条件为>240之类
+
+            fpr("进线");
+            publish(__client, bambu::msg::runGcode("G1 E150 F500\n"));//旋转热端齿轮辅助进料
+            mstd::delay(3s);//还是需要延迟,命令落实没这么快
+            motor_run(new_extruder, true);// 进线
+
+            extruder = new_extruder;//换料完成
+            ws_extruder = std::to_string(new_extruder);// 更新前端显示的耗材编号
+            // publish(__client, 一段冲刷gcode,冲刷完后记得降温);@_@
         }
     }//新写的N20上料
 
+    return;
 
     {//TT的上料
         publish(__client, bambu::msg::get_status);
@@ -431,16 +464,16 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, json);
 
-    mesp::print_memory_info();
+    // mesp::print_memory_info();
 
     static int bed_target_temper = -1;
-    static int nozzle_target_temper = -1;
+    // static int nozzle_target_temper = -1;
     bed_target_temper = doc["print"]["bed_target_temper"] | bed_target_temper;
-    // nozzle_target_temper = doc["print"]["nozzle_target_temper"] | nozzle_target_temper;
+    nozzle_target_temper.store(doc["print"]["nozzle_target_temper"] | nozzle_target_temper.load());
     std::string gcode_state = doc["print"]["gcode_state"] | "unkonw";
     hw_switch = doc["print"]["hw_switch_state"] | hw_switch;
 
-    fpr("hw_switch:" + std::to_string(hw_switch));//小绿点状态
+    // fpr("hw_switch:" + std::to_string(hw_switch));//小绿点状态
 
 
 
@@ -459,7 +492,7 @@ void callback_fun(esp_mqtt_client_handle_t client, const std::string& json) {// 
             if (old_extruder != bed_target_temper) {//旧通道不等于新通道
                 fpr("唤醒换料程序");
                 pause_lock = true;
-                async_channel.emplace([&]() {
+                async_channel.emplace([=]() {
                     change_filament(client, old_extruder);
                 });
             } else if (!pause_lock.load()) {// 可能会收到旧消息
@@ -650,8 +683,8 @@ extern "C" void app_main() {
                         int new_extruder = doc["action"]["value"] | -1;
                         async_channel.emplace(
                             [new_extruder]() {
+                                fpr("上料");
                                 load_filament(new_extruder);
-                                fpr("换料");
                             });
 
                     } else {

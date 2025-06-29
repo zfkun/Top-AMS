@@ -17,7 +17,7 @@ namespace mesp {
     struct Mqttclient {
       private:
         static void mqtt_event_callback(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data) {
-            fpr("\nMqtt事件分发");
+            // fpr("\nMqtt事件分发");
             esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
             esp_mqtt_client_handle_t client = event->client;
             // int msg_id = -1;
@@ -49,9 +49,9 @@ namespace mesp {
                 fpr("MQTT_EVENT_PUBLISHED（MQTT消息发布成功），msg_id=", event->msg_id);
                 break;
             case MQTT_EVENT_DATA:
-                fpr("MQTT_EVENT_DATA（接收到MQTT消息）");
+                // fpr("MQTT_EVENT_DATA（接收到MQTT消息）");
                 // printf("主题=%.*s\r\n",event->topic_len,event->topic);
-                printf("%.*s\r\n", event->data_len, event->data);
+                // printf("%.*s\r\n", event->data_len, event->data);
                 f(client, string(event->data));
                 break;
             case MQTT_EVENT_ERROR:
