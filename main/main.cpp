@@ -15,7 +15,7 @@
 #include "web_sync.hpp"
 
 #if __has_include("localconfig.hpp")
-#include "localconfig.hpp"
+// #include "localconfig.hpp"
 #endif
 
 
@@ -130,7 +130,7 @@ void publish(esp_mqtt_client_handle_t client, const std::string& msg) {
         fpr("发送成功,消息id=", msg_id);
     // fpr(TAG, "binary sent with msg_id=%d", msg_id);
     esp::gpio_out(config::LED_L, false);
-    mstd::delay(2s);//@_@这些延时还可以调
+    // mstd::delay(2s);//@_@这些延时还可以调
     //我觉得延时还是加在程序里好调试
 }
 
@@ -264,9 +264,10 @@ void load_filament(int new_extruder) {
         webfpr("不支持的上料通道");
         return;
     }
-    // webfpr("上料还没验证完毕,请先手动上料");
-    // return;
-
+#ifndef LOCAL_CONFIG
+    webfpr("上料还没验证完毕,请先手动上料");
+    return;
+#endif
     {//新写的N20上料
         publish(__client, bambu::msg::get_status);//查询小绿点
         mstd::delay(5s);//等待查询结果
@@ -285,6 +286,7 @@ void load_filament(int new_extruder) {
             motor_run(old_extruder, false);// 退线
 
             mstd::atomic_wait_un(ams_status, 退料完成);// 应该需要这个wait,打印机或者网络偶尔会卡
+            webfpr("退线完成");
         }
         {//进料
             publish(__client, bambu::msg::runGcode("M109 S250\n"));
@@ -299,10 +301,15 @@ void load_filament(int new_extruder) {
             mstd::delay(3s);//还是需要延迟,命令落实没这么快
             motor_run(new_extruder, true);// 进线
 
+            /*
+            此处应该查下小绿点,如果小绿点没触发的话,G1命令无效
+            */
+
             extruder = new_extruder;//换料完成
             ws_extruder = std::to_string(new_extruder);// 更新前端显示的耗材编号
             // publish(__client, 一段冲刷gcode,冲刷完后记得降温);@_@
         }
+        webfpr("上料完成");
     }//新写的N20上料
 
     return;
@@ -551,13 +558,13 @@ void Task1(void* param) {
 volatile bool running_flag{false};
 
 extern "C" void app_main() {
-
-    // for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
-    //     auto& x = config::motors[i];
-    //     esp::gpio_out(x.forward, false);
-    //     esp::gpio_out(x.backward, false);
-    // }//初始化电机GPIO
-
+#ifndef LOCAL_CONFIG
+    for (size_t i = 0; i < config::motors.size() - 1; i++) {//-1是因为把8初始化了usb调试就没了
+        auto& x = config::motors[i];
+        esp::gpio_out(x.forward, false);
+        esp::gpio_out(x.backward, false);
+    }//初始化电机GPIO
+#endif
 
     xTaskCreate(Task1, "Task1", 2048, NULL, 1, &Task1_handle);//微动任务
 
@@ -572,8 +579,11 @@ extern "C" void app_main() {
             WiFi.mode(WIFI_AP_STA);
             WiFi.beginSmartConfig();
 
+            int cnt = 0;
             while (!WiFi.smartConfigDone()) {
                 delay(1000);
+                esp::gpio_out(config::LED_R, cnt % 2);
+                ++cnt;
                 fpr("Waiting for SmartConfig");
             }
 
@@ -594,6 +604,7 @@ extern "C" void app_main() {
 
         fpr("WiFi Connected to AP");
         fpr("IP Address: ", (int)WiFi.localIP()[0], ".", (int)WiFi.localIP()[1], ".", (int)WiFi.localIP()[2], ".", (int)WiFi.localIP()[3]);
+        esp::gpio_out(config::LED_R, false);
     }// wifi连接部分
 
     // mesp::print_memory_info();
@@ -623,9 +634,11 @@ extern "C" void app_main() {
         });
 
         // 配置 WebSocket 事件处理
-        ws.onEvent([&](AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
+        ws.onEvent([&mqtt_Signal](AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
             if (type == WS_EVT_CONNECT) {
                 fpr("WebSocket 客户端", client->id(), "已连接\n");
+                fpr(last_ws_log);
+                webfpr(last_ws_log);
 
                 JsonDocument doc;
                 JsonObject root = doc.to<JsonObject>();
@@ -636,7 +649,6 @@ extern "C" void app_main() {
                 mesp::sendJson(doc);// 发送所有注册的值
 
                 fpr(doc);
-                webfpr(last_ws_log);
             } else if (type == WS_EVT_DISCONNECT) {
                 fpr("WebSocket 客户端 ", client->id(), "已断开\n");
             } else if (type == WS_EVT_DATA) {// 处理接收到的数据
@@ -714,7 +726,9 @@ extern "C" void app_main() {
             webfpr(ws, "MQTT连接中...");
             Mqtt.wait();
             if (Mqtt.connected()) {
+                auto temp = last_ws_log;
                 webfpr("MQTT连接成功");
+                last_ws_log = temp;//@_@或许应该改改webfpr,让它不覆盖
                 MQTT_done = true;
                 work(Mqtt);
             } else {
