@@ -104,13 +104,39 @@ inline void motor_run(int motor_id, bool fwd, T&& t) {
     }
 }//motor_run
 
+// @brief 获取有效的时间
+// @param time_list 时间列表
+// @param index 时间索引
+// @param fallback 默认时间
+template<typename T>
+int get_valid_time(T* const* time_list, int index, int max, const T& fallback) {
+    if (index >= 1 && index <= max) {
+        int value = time_list[index - 1]->get_value();
+        if (value > 0) {
+            return value;
+        }
+    }
+
+    return fallback.get_value();
+}
+
+// @brief 获取电机进料运转时间
+// @param motor_id 电机的编号
+inline int get_channel_load_time(int motor_id) {
+    return get_valid_time(config::load_time_list.data(), motor_id, config::motors.size(), config::load_time);
+}
+
+// @brief 获取电机的退料运转时间
+// @param motor_id 电机的编号
+inline int get_channel_uload_time(int motor_id) {
+    return get_valid_time(config::uload_time_list.data(), motor_id, config::motors.size(), config::uload_time);
+}
 
 // @brief 控制电机运行(前向或后向)
 // @param moter_id 电机编号,从 1 开始
 // @param fwd 标识方向，true 表示前向，false 表示后向
 inline void motor_run(int motor_id, bool fwd) {
-    motor_run(motor_id, fwd,
-              fwd ? config::load_time.get_value() : config::uload_time.get_value());
+    motor_run(motor_id, fwd, fwd ? get_channel_load_time(motor_id) : get_channel_uload_time(motor_id));
 }//motor_run
 
 

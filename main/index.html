@@ -64,7 +64,7 @@
         }
 
         .control-panel {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 24px auto;
             background: var(--card-bg);
             border-radius: var(--border-radius);
@@ -364,6 +364,12 @@
             transform: scale(0.97);
         }
 
+        .time-input input {
+          display: inline-block;
+          width: 100%;
+          max-width: 80%;
+        }
+
         .channel-controls {
             display: flex;
             gap: 16px;
@@ -570,6 +576,8 @@
                             <th>材料名称</th>
                             <th>续料通道</th>
                             <th>电机控制</th>
+                            <th>进料时间(ms)</th>
+                            <th>退料时间(ms)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -595,6 +603,14 @@
                                 <button class="btn warning" onclick="sendCommand('motor_backward',1)">退料</button>
                                 <button class="btn success" onclick="sendCommand('load_filament',1)">上料</button>
                             </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_1" value="0" min="0"
+                        onchange="sendKeyValue('load_time_1', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input" id="uload_time_1">
+                                <input type="number" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_1', this.value)">
+                            </td>
                         </tr>
                         <tr>
                             <td data-label="通道">通道 2</td>
@@ -618,6 +634,14 @@
                                 <button class="btn warning" onclick="sendCommand('motor_backward',2)">退料</button>
                                 <button class="btn success" onclick="sendCommand('load_filament',2)">上料</button>
 
+                            </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_2" value="0" min="0"
+                        onchange="sendKeyValue('load_time_2', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input" id="uload_time_2">
+                                <input type="number" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_2', this.value)">
                             </td>
                         </tr>
                         <tr>
@@ -643,6 +667,14 @@
                                 <button class="btn success" onclick="sendCommand('load_filament',3)">上料</button>
 
                             </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_3" value="0" min="0"
+                        onchange="sendKeyValue('load_time_3', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input">
+                                <input type="number" id="uload_time_3" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_3', this.value)">
+                            </td>
                         </tr>
                         <tr>
                             <td data-label="通道">通道 4</td>
@@ -665,6 +697,14 @@
                                 <button class="btn primary" onclick="sendCommand('motor_forward',4)">进料</button>
                                 <button class="btn warning" onclick="sendCommand('motor_backward',4)">退料</button>
                                 <button class="btn success" onclick="sendCommand('load_filament',4)">上料</button>
+                            </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_4" value="0" min="0"
+                        onchange="sendKeyValue('load_time_4', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input">
+                                <input type="number" id="uload_time_4" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_4', this.value)">
                             </td>
                         </tr>
                         <tr>
@@ -690,6 +730,14 @@
                                 <button class="btn success" onclick="sendCommand('load_filament',5)">上料</button>
 
                             </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_5" value="0" min="0"
+                        onchange="sendKeyValue('load_time_5', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input" id="uload_time_5">
+                                <input type="number" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_5', this.value)">
+                            </td>
                         </tr>
                         <tr>
                             <td data-label="通道">通道 6</td>
@@ -712,6 +760,14 @@
                                 <button class="btn primary" onclick="sendCommand('motor_forward',6)">进料</button>
                                 <button class="btn warning" onclick="sendCommand('motor_backward',6)">退料</button>
                                 <button class="btn success" onclick="sendCommand('load_filament',6)">上料</button>
+                            </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_6" value="0" min="0"
+                        onchange="sendKeyValue('load_time_6', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input">
+                                <input type="number" id="uload_time_6" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_6', this.value)">
                             </td>
                         </tr>
                         <tr>
@@ -736,6 +792,14 @@
                                 <button class="btn warning" onclick="sendCommand('motor_backward',7)">退料</button>
                                 <button class="btn success" onclick="sendCommand('load_filament',7)">上料</button>
                             </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_7" value="0" min="0"
+                        onchange="sendKeyValue('load_time_7', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input">
+                                <input type="number" id="uload_time_7" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_7', this.value)">
+                            </td>
                         </tr>
                         <tr>
                             <td data-label="通道">通道 8</td>
@@ -758,6 +822,14 @@
                                 <button class="btn primary" onclick="sendCommand('motor_forward',8)">进料</button>
                                 <button class="btn warning" onclick="sendCommand('motor_backward',8)">退料</button>
                                 <button class="btn success" onclick="sendCommand('load_filament',8)">上料</button>
+                            </td>
+                            <td data-label="进料时间" class="time-input">
+                                <input type="number" id="load_time_8" value="0" min="0"
+                        onchange="sendKeyValue('load_time_8', this.value)">
+                            </td>
+                            <td data-label="退料时间" class="time-input">
+                                <input type="number" id="uload_time_8" value="0" min="0"
+                        onchange="sendKeyValue('uload_time_8', this.value)">
                             </td>
                         </tr>
                     </tbody>
@@ -867,6 +939,46 @@
                             break;
                         case 'uload_time':
                             document.getElementById('uload_time').value = item.value;
+                        case 'load_time_1':
+                            document.getElementById('load_time_1').value = item.value;
+                            break;
+                        case 'uload_time_1':
+                            document.getElementById('uload_time_1').value = item.value;
+                        case 'load_time_2':
+                            document.getElementById('load_time_2').value = item.value;
+                            break;
+                        case 'uload_time_2':
+                            document.getElementById('uload_time_2').value = item.value;
+                        case 'load_time_3':
+                            document.getElementById('load_time_3').value = item.value;
+                            break;
+                        case 'uload_time_3':
+                            document.getElementById('uload_time_3').value = item.value;
+                        case 'load_time_4':
+                            document.getElementById('load_time_4').value = item.value;
+                            break;
+                        case 'uload_time_4':
+                            document.getElementById('uload_time_4').value = item.value;
+                        case 'load_time_5':
+                            document.getElementById('load_time_5').value = item.value;
+                            break;
+                        case 'uload_time_5':
+                            document.getElementById('uload_time_5').value = item.value;
+                        case 'load_time_6':
+                            document.getElementById('load_time_6').value = item.value;
+                            break;
+                        case 'uload_time_6':
+                            document.getElementById('uload_time_6').value = item.value;
+                        case 'load_time_7':
+                            document.getElementById('load_time_7').value = item.value;
+                            break;
+                        case 'uload_time_7':
+                            document.getElementById('uload_time_7').value = item.value;
+                        case 'load_time_8':
+                            document.getElementById('load_time_8').value = item.value;
+                            break;
+                        case 'uload_time_8':
+                            document.getElementById('uload_time_8').value = item.value;
                             break;
                         // 处理通道信息
                         case "extruder":

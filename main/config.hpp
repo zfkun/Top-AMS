@@ -32,6 +32,54 @@ namespace config {
     inline mesp::wsStoreValue<int> load_time("load_time", 6000);// 进料运转时间
     inline mesp::wsStoreValue<int> uload_time("uload_time", 5000);// 退料运转时间
 
+    inline mesp::wsStoreValue<int> load_time_1("load_time_1", 0);// 通道1 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_1("uload_time_1", 0);// 通道1 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_2("load_time_2", 0);// 通道2 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_2("uload_time_2", 0);// 通道2 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_3("load_time_3", 0);// 通道3 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_3("uload_time_3", 0);// 通道3 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_4("load_time_4", 0);// 通道4 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_4("uload_time_4", 0);// 通道4 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_5("load_time_5", 0);// 通道5 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_5("uload_time_5", 0);// 通道5 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_6("load_time_6", 0);// 通道6 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_6("uload_time_6", 0);// 通道6 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_7("load_time_7", 0);// 通道7 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_7("uload_time_7", 0);// 通道7 退料运转时间
+
+    inline mesp::wsStoreValue<int> load_time_8("load_time_8", 0);// 通道8 进料运转时间
+    inline mesp::wsStoreValue<int> uload_time_8("uload_time_8", 0);// 通道8 退料运转时间
+
+    // 通道进料运转时间查询表
+    inline const std::array<mesp::wsStoreValue<int>*, 8> load_time_list = {
+        &load_time_1,
+        &load_time_2,
+        &load_time_3,
+        &load_time_4,
+        &load_time_5,
+        &load_time_6,
+        &load_time_7,
+        &load_time_8
+    };
+
+    // 通道退料运转时间查询表
+    inline const std::array<mesp::wsStoreValue<int>*, 8> uload_time_list = {
+        &uload_time_1,
+        &uload_time_2,
+        &uload_time_3,
+        &uload_time_4,
+        &uload_time_5,
+        &uload_time_6,
+        &uload_time_7,
+        &uload_time_8
+    };
+
 #ifdef MOTORS_6
     inline gpio_num_t forward_click = GPIO_NUM_4;//进料微动
 #else
