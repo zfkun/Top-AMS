@@ -264,10 +264,10 @@ void load_filament(int new_extruder) {
         webfpr("不支持的上料通道");
         return;
     }
-#ifndef LOCAL_CONFIG
+    // #ifndef LOCAL_CONFIG
     webfpr("上料还没验证完毕,请先手动上料");
-    return;
-#endif
+    // return;
+    // #endif
     {//新写的N20上料
         publish(__client, bambu::msg::get_status);//查询小绿点
         mstd::delay(5s);//等待查询结果
