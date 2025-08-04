@@ -3,6 +3,7 @@ build/
 sdkconfig.old
 managed_components/
 .vscode/
+.cache/
 localconfig.hpp
 temp/
 main/index.hpp
