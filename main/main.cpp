@@ -15,7 +15,7 @@
 #include "web_sync.hpp"
 
 #if __has_include("localconfig.hpp")
-// #include "localconfig.hpp"
+#include "localconfig.hpp"
 #endif
 
 

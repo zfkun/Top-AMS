@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef LOCAL_CONFIG
+#define LOCAL_CONFIG
+#endif
+
 #include "esptools.hpp"
 
 
