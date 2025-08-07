@@ -149,7 +149,7 @@ void change_filament(esp_mqtt_client_handle_t client, int old_extruder) {
         int new_extruder = extruder;
         ws_extruder = std::to_string(old_extruder) + string(" → ") + std::to_string(new_extruder);
 
-        publish(client, bambu::msg::runGcode("M211 S \nM211 X1 Y1 Z1\nM1002 push_ref_mode\nG91 \nG1 Z-1.0 F900\nM1002 pop_ref_mode\nM211 R\n"));//防止Z轴抬高
+        publish(client, bambu::msg::runGcode("M211 S \nM211 X1 Y1 Z1\nM1002 push_ref_mode\nG91 \nG1 Z-5.0 F900\nM1002 pop_ref_mode\nM211 R\n"));//防止Z轴抬高
         fpr("防止Z抬高");
 
         publish(client, bambu::msg::uload);

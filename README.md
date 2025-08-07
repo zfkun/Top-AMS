@@ -30,9 +30,13 @@
 - typeC口如果是由会持续协商充电协议的充电器供电,或者使用espidf调试刷入等,GPIO18,19就会有电平变化<br>
   经典版带串口芯片的不会有这个问题
 ### 上下料模块
-- 上下料模块有两种电机方案,这两种方案在与主控的接线上没有不同
-- [N20电机方案](hard/N20电机方案/README.md)
-- [TT电机方案](hard/TT电机方案/README.md)
+- 上下料模块有多种电机方案,这些方案只是硬件设计不同,在与主控的接线上没有不同
+- [起源N20](hard/N20电机方案/README.md)
+  - 项目最早的设计方案
+- [TT电机](https://makerworld.com.cn/zh/models/1418429-gua-pei-topduo-se-da-yin-de-ttji-chu-ji-v2-0#profileId-1540158)
+  - 使用成本更低的TT电机
+- [N20D](https://makerworld.com.cn/zh/models/1464399-n20dian-ji-8tong-ji-chu-ji#profileId-1594882)
+  - 成对N20电机设计,有适配A1龙门的支架
 
 ### 刷入固件
 - [固件刷入教程](https://docs.espressif.com/projects/esp-test-tools/zh_CN/latest/esp32/production_stage/tools/flash_download_tool.html)
@@ -62,6 +66,8 @@
 - 1.05固件加了鉴权,现不支持
 ### 讨论
 - Q群:8820913⑨九,注明来意
+### 配套设施
+- [迷你三通](https://makerworld.com.cn/zh/models/1289990-3tong-mini-wu-xu-qi-dong-jie-tou-chao-si-hua#profileId-1383310)
 
 ### 代办
 - web心跳机制
