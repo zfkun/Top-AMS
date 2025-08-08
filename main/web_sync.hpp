@@ -12,8 +12,8 @@
 
 namespace mesp {
 
-    inline std::map<std::string, std::function<void(const JsonObject&)>> ws_value_update;
-    inline std::map<std::string, std::function<void(JsonDocument&)>> ws_value_to_json;
+    inline std::map<std::string_view, std::function<void(const JsonObject&)>> ws_value_update;
+    inline std::map<std::string_view, std::function<void(JsonDocument&)>> ws_value_to_json;
     //全局的ws服务
     inline AsyncWebSocket ws_server("/ws");//现在似乎也没有使用非全局的ws的需求,就先统一为这个了
     inline ConfigStore ws_config("ws");
@@ -31,12 +31,12 @@ namespace mesp {
         //@_@静态断言,T只能基本类型
         using value_type = T;
 
-        const std::string name;//值名,不可改变
+        const std::string_view name;//值名,不可改变
         value_type value;
         mstd::lock_key key;//互斥体,用于保护value的读写
 
         template <typename... V>
-        wsValue(const std::string& n, V&&... v) : name(n), value(value_type(std::forward<V>(v)...)) {
+        wsValue(const std::string_view& n, V&&... v) : name(n), value(value_type(std::forward<V>(v)...)) {
             ws_value_update[name] = [this](const JsonObject& obj) {
                 this->set_value(obj);
             };
@@ -104,7 +104,7 @@ namespace mesp {
             to_json(doc);// 添加当前值到data数组
             sendJson(doc);
         }
-        //自然,这种每个元素只发自己的json方式,在网络IO上称不上高效,不过写起来比较方便
+       
 
 
         wsValue& operator=(const value_type& v) {
@@ -142,7 +142,7 @@ namespace mesp {
         using wsValue<T>::update;
 
         template <typename... V>
-        wsStoreValue(const std::string& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
+        wsStoreValue(const std::string_view& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
             // 从配置中加载初始值，如果没有则使用传入的默认值
             wsValue<T>::set_value(ws_config.get(name, get_value()));
             ws_value_update[name] = [this](const JsonObject& obj) {
