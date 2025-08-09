@@ -467,6 +467,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
+
+
 <body>
     <div class="status-bar">
         <div class="status-indicator">
@@ -496,20 +498,20 @@
 
             <div class="input-grid">
                 <div class="input-group">
-                    <label for="bambu-ip">打印机 IP 地址</label>
-                    <input type="text" id="bambu-ip" placeholder="192.168.1.1">
+                    <label for="bambu_ip">打印机 IP 地址</label>
+                    <input type="text" id="bambu_ip" placeholder="192.168.1.1">
                     <div class="help-text">在打印机设置-网络里可以查看</div>
                 </div>
 
                 <div class="input-group">
-                    <label for="device-serial">设备序列号</label>
-                    <input type="text" id="device-serial" placeholder="">
+                    <label for="device_serial">设备序列号</label>
+                    <input type="text" id="device_serial" placeholder="">
                     <div class="help-text">在打印机设置里可以查看</div>
                 </div>
 
                 <div class="input-group">
-                    <label for="mqtt-pass">MQTT 密码</label>
-                    <input type="text" id="mqtt-pass" placeholder="">
+                    <label for="MQTT_pass">MQTT 密码</label>
+                    <input type="text" id="MQTT_pass" placeholder="">
                     <div class="help-text">打印机设置局域网模式里的密码,不需要开启局域网模式</div>
                 </div>
             </div>
@@ -555,7 +557,7 @@
 
                 <div class="channel-indicator">
                     <i class="fas fa-info-circle"></i>
-                    <span>当前通道: <b id="this-channel">未选择</b></span>
+                    <span>当前通道: <b id="extruder">未选择</b></span>
                 </div>
             </div>
 
@@ -572,197 +574,11 @@
                             <th>电机控制</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td data-label="通道">通道 1</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#3498db"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">PLA</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',1)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',1)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',1)">装载</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 2</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#e74c3c"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">PETG</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',2)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',2)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',2)">装载</button>
 
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 3</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#2ecc71"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">ABS</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',3)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',3)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',3)">装载</button>
-
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 4</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#f1c40f"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">TPU</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',4)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',4)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',4)">装载</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 5</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#9b59b6"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">PLA</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',5)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',5)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',5)">装载</button>
-
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 6</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#1abc9c"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">PETG</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',6)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',6)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',6)">装载</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 7</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#e67e22"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">ABS</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',7)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',7)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',7)">装载</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td data-label="通道">通道 8</td>
-                            <td data-label="颜色"><input type="color" class="color-picker" value="#34495e"
-                                    onchange="updateColorIndicator(this)"></td>
-                            <td data-label="材料名称">TPU</td>
-                            <td data-label="续料通道">
-                                <select class="material-select">
-                                    <option value="1">通道 1</option>
-                                    <option value="2">通道 2</option>
-                                    <option value="3">通道 3</option>
-                                    <option value="4">通道 4</option>
-                                    <option value="5">通道 5</option>
-                                    <option value="6">通道 6</option>
-                                    <option value="7">通道 7</option>
-                                    <option value="8">通道 8</option>
-                                </select>
-                            </td>
-                            <td data-label="电机控制" class="btn-group">
-                                <button class="btn primary" onclick="sendCommand('motor_forward',8)">正转</button>
-                                <button class="btn warning" onclick="sendCommand('motor_backward',8)">反转</button>
-                                <button class="btn success" onclick="sendCommand('load_filament',8)">装载</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="material-table"></tbody>
                 </table>
             </div>
+
         </div>
         <style>
             @media (max-width: 768px) {
@@ -820,6 +636,55 @@
     </div>
 
     <script>
+        const channels = [
+            { id: 1, color: "#3498db", name: "PLA" },
+            { id: 2, color: "#e74c3c", name: "PETG" },
+            { id: 3, color: "#2ecc71", name: "ABS" },
+            { id: 4, color: "#f1c40f", name: "TPU" },
+            { id: 5, color: "#9b59b6", name: "PLA" },
+            { id: 6, color: "#1abc9c", name: "PETG" },
+            { id: 7, color: "#e67e22", name: "ABS" },
+            { id: 8, color: "#34495e", name: "TPU" }
+        ];
+
+        //生成下拉框选项
+        function createOptions(selectedId) {
+            let opts = "";
+            for (let i = 1; i <= 8; i++) {
+                opts += `<option value="${i}" ${i === selectedId ? "selected" : ""}>通道 ${i}</option>`;
+            }
+            return opts;
+        }
+
+        const tbody = document.getElementById("material-table");
+
+        channels.forEach(ch => {
+            const row = `
+        <tr>
+            <td data-label="通道">通道 ${ch.id}</td>
+            <td data-label="颜色">
+                <input type="color" class="color-picker" id="ext${ch.id}_color" value="${ch.color}" onchange="sendKeyValue(this.id,this.value)">
+            </td>
+            <td data-label="材料名称">
+                <input type="text" class="material-input" id="ext${ch.id}_name" value="${ch.name}" onchange="sendKeyValue(this.id,this.value)">
+            </td>
+            <td data-label="续料通道">
+                <select class="material-select" id="ext${ch.id}_next" onchange="sendKeyValue(this.id,this.value)">
+                    ${createOptions(ch.id)}
+                </select>
+            </td>
+            <td data-label="电机控制" class="btn-group">
+                <button class="btn primary" onclick="sendCommand('motor_forward',${ch.id})">正转</button>
+                <button class="btn warning" onclick="sendCommand('motor_backward',${ch.id})">反转</button>
+                <button class="btn success" onclick="sendCommand('load_filament',${ch.id})">装载</button>
+            </td>
+        </tr>
+    `;
+            tbody.insertAdjacentHTML("beforeend", row);
+        });
+        // 上面都是生成通道管理的
+
+
         const ws = new WebSocket('ws://' + window.location.hostname + '/ws');
         const espDot = document.getElementById('esp-dot');
         const mqttDot = document.getElementById('mqtt-dot');
@@ -841,37 +706,28 @@
             const doc = JSON.parse(event.data);
             if (doc.data) {
                 doc.data.forEach(item => {
-                    switch (item.name) {
-                        case 'MQTT_done':
-                            if (item.value) {
-                                mqttDot.classList.add('connected');
-                                mqttDot.classList.remove('disconnected');
-                                addLog('MQTT连接成功', 'success');
-                            } else {
-                                mqttDot.classList.add('disconnected');
-                                mqttDot.classList.remove('connected');
-                                addLog('MQTT连接失败', 'error');
-                            }
-                            break;
-                        case 'MQTT_pass':
-                            document.getElementById('mqtt-pass').value = item.value;
-                            break;
-                        case 'bambu_ip':
-                            document.getElementById('bambu-ip').value = item.value;
-                            break;
-                        case 'device_serial':
-                            document.getElementById('device-serial').value = item.value;
-                            break;
-                        case 'load_time':
-                            document.getElementById('load_time').value = item.value;
-                            break;
-                        case 'uload_time':
-                            document.getElementById('uload_time').value = item.value;
-                            break;
-                        // 处理通道信息
-                        case "extruder":
-                            document.getElementById('this-channel').textContent = item.value;
-                            break;
+                    //MQTT的先特化处理
+                    if (item.name == 'MQTT_done') {
+                        if (item.value) {
+                            mqttDot.classList.add('connected');
+                            mqttDot.classList.remove('disconnected');
+                            addLog('MQTT连接成功', 'success');
+                        } else {
+                            mqttDot.classList.add('disconnected');
+                            mqttDot.classList.remove('connected');
+                            addLog('MQTT连接失败', 'error');
+                        }
+                    } else {
+                        const element = document.getElementById(item.name);
+                        const propertyPriority = ['value', 'textContent', 'innerHTML'];
+
+                        if (element) {
+                            const validProperty = propertyPriority.find(prop => prop in element);
+                            if (validProperty)
+                                element[validProperty] = item.value;
+                        } else {
+                            addLog(`未找到元素: ${item.name}`, 'error');
+                        }
                     }
                 });
             }
@@ -899,15 +755,15 @@
                 data: [
                     {
                         name: "MQTT_pass",
-                        value: document.getElementById('mqtt-pass').value
+                        value: document.getElementById('MQTT_pass').value
                     },
                     {
                         name: "bambu_ip",
-                        value: document.getElementById('bambu-ip').value
+                        value: document.getElementById('bambu_ip').value
                     },
                     {
                         name: "device_serial",
-                        value: document.getElementById('device-serial').value
+                        value: document.getElementById('device_serial').value
                     }
                 ]
             };
@@ -958,20 +814,11 @@
             return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         }
 
-        // function updateColorIndicator(element) {
-        //     // 视觉反馈
-        //     element.parentElement.animate([
-        //         { transform: 'scale(1)', backgroundColor: 'transparent' },
-        //         { transform: 'scale(1.1)', backgroundColor: 'rgba(52, 152, 219, 0.2)' },
-        //         { transform: 'scale(1)', backgroundColor: 'transparent' }
-        //     ], {
-        //         duration: 300,
-        //         iterations: 1
-        //     });
-
-        //     // 在实际应用中，这里可以发送颜色更新命令
-        //     // sendKeyValue('color_channel_X', element.value);
-        // }
+        function updateColor(element) {
+            const newColor = element.value;
+            // input.style.backgroundColor = newColor;
+            sendKeyValue(this.id, this.value);
+        }
 
         // 初始化状态指示器
         document.addEventListener('DOMContentLoaded', function () {

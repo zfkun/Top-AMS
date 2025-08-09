@@ -18,9 +18,17 @@ namespace config {
         gpio_num_t forward = GPIO_NUM_NC;
         gpio_num_t backward = GPIO_NUM_NC;
 
+        mesp::wsStoreValue<string> name;//耗材名
+        mesp::wsStoreValue<string> color;//颜色
+        mesp::wsStoreValue<int> next_channel;//续料通道
+
         motor() = default;
-        motor(gpio_num_t f, gpio_num_t b) : forward(f), backward(b) {}
-        //通道管理需要的东西都加到这里和web同步
+        motor(int i, gpio_num_t f, gpio_num_t b)
+            : forward(f),
+              backward(b),
+              name("ext" + std::to_string(i) + "_name", "PETG"),
+              color("ext" + std::to_string(i) + "_color", "#ffffff"),
+              next_channel("ext" + std::to_string(i) + "_next", i) {}
     };// motor
 
 
@@ -46,7 +54,7 @@ namespace config {
 
 
 
-    inline std::array<motor, 16> motors{
+    inline std::array<motor, 8> motors{
 #ifdef MOTORS_6
         // 当前配置（6通道）
         motor{GPIO_NUM_1, GPIO_NUM_0},// 通道1
@@ -58,17 +66,27 @@ namespace config {
         motor{GPIO_NUM_NC, GPIO_NUM_NC},// 通道7（未使用）
     // ... 剩余通道填充默认值
 #else
-        // 注释中的备用配置（8通道）
-        motor{GPIO_NUM_2, GPIO_NUM_3},// 通道1
-        motor{GPIO_NUM_10, GPIO_NUM_6},// 通道2
-        motor{GPIO_NUM_5, GPIO_NUM_4},// 通道3
-        motor{GPIO_NUM_8, GPIO_NUM_9},// 通道4
-        motor{GPIO_NUM_0, GPIO_NUM_1},// 通道5
-        motor{GPIO_NUM_20, GPIO_NUM_21},// 通道6
-        motor{GPIO_NUM_12, GPIO_NUM_13},// 通道7,GPIO12,13为灯,避免冲突需要将灯定义改为NC
-        motor{GPIO_NUM_18, GPIO_NUM_19},// 通道8,GPIO18,19和USB冲突,需要带串口芯片或者无协议供电
-    // ... 剩余通道填充默认值
+    // 注释中的备用配置（8通道）
+    // motor{1, GPIO_NUM_2, GPIO_NUM_3},// 通道1
+    //     motor{2, GPIO_NUM_10, GPIO_NUM_6},// 通道2
+    //     motor{3, GPIO_NUM_5, GPIO_NUM_4},// 通道3
+    //     motor{4, GPIO_NUM_8, GPIO_NUM_9},// 通道4
+    //     motor{5, GPIO_NUM_0, GPIO_NUM_1},// 通道5
+    //     motor{6, GPIO_NUM_20, GPIO_NUM_21},// 通道6
+    //     motor{7, GPIO_NUM_12, GPIO_NUM_13},// 通道7,GPIO12,13为灯,避免冲突需要将灯定义改为NC
+    //     motor{8, GPIO_NUM_18, GPIO_NUM_19},// 通道8,GPIO18,19和USB冲突,需要带串口芯片或者无协议供电
 #endif
+        //本地调试gpio,记得去掉,或者也在高级展开里可以配置
+        // 电机要使用的GPIO
+        motor{1, GPIO_NUM_2, GPIO_NUM_3},// 通道1,前向GPIO,后向GPIO
+        motor{2, GPIO_NUM_5, GPIO_NUM_4},// 通道3
+        motor{3, GPIO_NUM_10, GPIO_NUM_6},// 通道2
+        // motor{GPIO_NUM_5, GPIO_NUM_4},// 通道3
+        motor{4, GPIO_NUM_8, GPIO_NUM_9},// 通道4
+        motor{5, GPIO_NUM_0, GPIO_NUM_1},// 通道5
+        motor{6, GPIO_NUM_20, GPIO_NUM_21},// 通道6
+        motor{7, GPIO_NUM_12, GPIO_NUM_13},// 通道7,GPIO12,13为灯,避免冲突需要将灯定义改为NC
+        motor{8, GPIO_NUM_18, GPIO_NUM_19},// 通道8,GPIO18,19和USB冲突,需要带串口芯片或者无协议供电
     };
     // 小白用户自定义电机使用GPIO时
     // 请仔细查询你开发板的针脚定义

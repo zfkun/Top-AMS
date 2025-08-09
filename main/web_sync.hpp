@@ -12,8 +12,8 @@
 
 namespace mesp {
 
-    inline std::map<std::string_view, std::function<void(const JsonObject&)>> ws_value_update;
-    inline std::map<std::string_view, std::function<void(JsonDocument&)>> ws_value_to_json;
+    inline std::map<std::string, std::function<void(const JsonObject&)>> ws_value_update;
+    inline std::map<std::string, std::function<void(JsonDocument&)>> ws_value_to_json;
     //全局的ws服务
     inline AsyncWebSocket ws_server("/ws");//现在似乎也没有使用非全局的ws的需求,就先统一为这个了
     inline ConfigStore ws_config("ws");
@@ -31,7 +31,7 @@ namespace mesp {
         //@_@静态断言,T只能基本类型
         using value_type = T;
 
-        const std::string_view name;//值名,不可改变
+        const std::string name;//值名,不可改变
         value_type value;
         mstd::lock_key key;//互斥体,用于保护value的读写
 
@@ -104,7 +104,7 @@ namespace mesp {
             to_json(doc);// 添加当前值到data数组
             sendJson(doc);
         }
-       
+
 
 
         wsValue& operator=(const value_type& v) {
@@ -148,6 +148,9 @@ namespace mesp {
             ws_value_update[name] = [this](const JsonObject& obj) {
                 this->wsStoreValue::set_value(obj);
             };
+            // if(n.size()>15)
+            // fpr("error: 键名过长 ",n);
+            fpr("键名:", n, " ", name);
         }
 
 
@@ -174,5 +177,13 @@ namespace mesp {
     };//ws_value
 
     //外面加到两个map后其实set_value的设计有点多余了,还有get_value(),@_@之后修改
+
+
+
+    /*
+    wsValue<类型(只支持基本类型)> a("键名",默认值);
+    键名是和前端的name对应
+    如果是wsStoreValue,同时也是存falsh的键名
+    */
 
 }//mesp
