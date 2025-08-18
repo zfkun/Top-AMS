@@ -24,6 +24,7 @@ using std::string;
 //新添加的变量
 TaskHandle_t Task1_handle;//微动任务
 volatile int hw_switch = 0;
+TaskHandle_t Task2_handle;//延时调试信息
 
 
 //分割
@@ -264,10 +265,9 @@ void load_filament(int new_extruder) {
         webfpr("不支持的上料通道");
         return;
     }
-    // #ifndef LOCAL_CONFIG
-    webfpr("上料还没验证完毕,请先手动上料");
-    // return;
-    // #endif
+
+    webfpr("开始进料");
+    
     {//新写的N20上料
         publish(__client, bambu::msg::get_status);//查询小绿点
         mstd::delay(5s);//等待查询结果
@@ -548,10 +548,21 @@ void Task1(void* param) {
             motor_run(new_extruder, true, 1s);// 进线
         }
 
-        vTaskDelay(20 / portTICK_PERIOD_MS);//延时1000ms=1s,使系统执行其他任务删了就寄了
+        vTaskDelay(20 / portTICK_PERIOD_MS);//延时1000ms=1
     }
 }//微动缓冲程序
 
+
+void Task2(void* param) {//延时检测
+    while (true) {
+vTaskDelay(1000 / portTICK_PERIOD_MS);//延时1000ms=1s,使系统执行其他任务删了就寄了
+   timeout++;
+   if (timeout > 8) {
+ webfpr("打印机连接超时检查网络状态");
+ vTaskDelay(5000 / portTICK_PERIOD_MS);//延时1000ms=1s,使系统执行其他任务删了就寄了
+    }
+}//延时打印内存信息
+}
 
 #include "index.hpp"
 
@@ -567,6 +578,7 @@ extern "C" void app_main() {
 #endif
 
     xTaskCreate(Task1, "Task1", 2048, NULL, 1, &Task1_handle);//微动任务
+    xTaskCreate(Task2, "Task2", 2048, NULL, 1, &Task2_handle);//延时调试信息
 
 
     {// wifi连接部分
