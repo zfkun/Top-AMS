@@ -19,54 +19,54 @@ namespace mesp {
     struct ConfigStore {
         Preferences prefs;
 
-        ConfigStore(const std::string& name) {
-            prefs.begin(name.c_str(), false);
+        ConfigStore(const std::string_view name) {
+            prefs.begin(name.data(), false);
         }
         ~ConfigStore() {
             prefs.end();
         }
 
-        void set(const std::string& key, const std::string& value) {
-            prefs.putString(key.c_str(), value.c_str());
+        void set(const std::string_view key, const std::string_view value) {
+            prefs.putString(key.data(), value.data());
         }
-        void set(const std::string& key, const char* value) {
-            prefs.putString(key.c_str(), value);
+        void set(const std::string_view key, const char* value) {
+            prefs.putString(key.data(), value);
         }
-        void set(const std::string& key, const int& value) {
-            prefs.putInt(key.c_str(), value);
+        void set(const std::string_view key, const int value) {
+            prefs.putInt(key.data(), value);
         }
-        void set(const std::string& key, const float& value) {
-            prefs.putFloat(key.c_str(), value);
+        void set(const std::string_view key, const float value) {
+            prefs.putFloat(key.data(), value);
         }
-        void set(const std::string& key, const bool& value) {
-            prefs.putBool(key.c_str(), value);
+        void set(const std::string_view key, const bool value) {
+            prefs.putBool(key.data(), value);
         }
 
         template <typename T>
-        T get(const std::string& ker, const T& def = T()) {
+        T get(const std::string_view ker, const T& def = T()) {
             if constexpr (std::is_same_v<T, int>)
-                return prefs.getInt(ker.c_str(), def);
+                return prefs.getInt(ker.data(), def);
             else if constexpr (std::is_same_v<T, float>)
-                return prefs.getFloat(ker.c_str(), def);
+                return prefs.getFloat(ker.data(), def);
             else if constexpr (std::is_same_v<T, bool>)
-                return prefs.getBool(ker.c_str(), def);
+                return prefs.getBool(ker.data(), def);
             else if constexpr (std::is_same_v<T, std::string>)
-                return prefs.getString(ker.c_str(), def.c_str()).c_str();
+                return prefs.getString(ker.data(), def.c_str()).c_str();
             // else if constexpr (std::is_same_v<T, const char*>)
             //     return prefs.getString(key.c_str(), def).c_str();//这个要给返回类型加上元函数,比较麻烦
             else
                 static_assert(false, "Unsupported type for ConfigStore get");
         }
 
-        std::string get(const std::string& key, const char* def) {
+        std::string get(const std::string_view key, const char* def) {
             fpr("ker", "get");
             fpr(def);
-            return prefs.getString(key.c_str(), def).c_str();
+            return prefs.getString(key.data(), def).c_str();
         }
 
 
-        void remove(const std::string& key) {
-            prefs.remove(key.c_str());
+        void remove(const std::string_view key) {
+            prefs.remove(key.data());
         }
 
         void clear() {

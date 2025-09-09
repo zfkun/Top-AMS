@@ -36,7 +36,7 @@ namespace mesp {
         mstd::lock_key key;//互斥体,用于保护value的读写
 
         template <typename... V>
-        wsValue(const std::string& n, V&&... v) : name(n), value(value_type(std::forward<V>(v)...)) {
+        wsValue(const std::string_view& n, V&&... v) : name(n), value(value_type(std::forward<V>(v)...)) {
             ws_value_update[name] = [this](const JsonObject& obj) {
                 this->set_value(obj);
             };
@@ -104,7 +104,7 @@ namespace mesp {
             to_json(doc);// 添加当前值到data数组
             sendJson(doc);
         }
-        //自然,这种每个元素只发自己的json方式,在网络IO上称不上高效,不过写起来比较方便
+
 
 
         wsValue& operator=(const value_type& v) {
@@ -142,12 +142,15 @@ namespace mesp {
         using wsValue<T>::update;
 
         template <typename... V>
-        wsStoreValue(const std::string& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
+        wsStoreValue(const std::string_view& n, V&&... v) : wsValue<T>(n, std::forward<V>(v)...) {
             // 从配置中加载初始值，如果没有则使用传入的默认值
             wsValue<T>::set_value(ws_config.get(name, get_value()));
             ws_value_update[name] = [this](const JsonObject& obj) {
                 this->wsStoreValue::set_value(obj);
             };
+            // if(n.size()>15)
+            // fpr("error: 键名过长 ",n);
+            fpr("键名:", n, " ", name);
         }
 
 
@@ -174,5 +177,13 @@ namespace mesp {
     };//ws_value
 
     //外面加到两个map后其实set_value的设计有点多余了,还有get_value(),@_@之后修改
+
+
+
+    /*
+    wsValue<类型(只支持基本类型)> a("键名",默认值);
+    键名是和前端的name对应
+    如果是wsStoreValue,同时也是存falsh的键名
+    */
 
 }//mesp

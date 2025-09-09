@@ -7,7 +7,7 @@
 #include "esp_tls.h"
 #include "mqtt_client.h"
 
-
+int timeout = 0;
 namespace mesp {
 
     using std::string;
@@ -49,10 +49,11 @@ namespace mesp {
                 fpr("MQTT_EVENT_PUBLISHED（MQTT消息发布成功），msg_id=", event->msg_id);
                 break;
             case MQTT_EVENT_DATA:
-                // fpr("MQTT_EVENT_DATA（接收到MQTT消息）");
-                // printf("主题=%.*s\r\n",event->topic_len,event->topic);
-                // printf("%.*s\r\n", event->data_len, event->data);
+                 //fpr("MQTT_EVENT_DATA（接收到MQTT消息）");
+                 //printf("主题=%.*s\r\n",event->topic_len,event->topic);
+                 printf("%.*s\r\n", event->data_len, event->data);
                 f(client, string(event->data));
+                timeout = 0;               
                 break;
             case MQTT_EVENT_ERROR:
                 fpr("MQTT_EVENT_ERROR（MQTT事件错误）");
