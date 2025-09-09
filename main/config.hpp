@@ -8,7 +8,7 @@
 
 #include "web_sync.hpp"
 // #define MOTORS_6// 使用当前配置（6通道）注释掉就是8通道
-#define LOCAL_CONFIG
+// #define LOCAL_CONFIG
 
 namespace config {
 
